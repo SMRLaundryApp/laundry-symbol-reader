@@ -33,7 +33,7 @@ import libalx.stdio	as alx
 def img_get():
 	cam		= cv.VideoCapture(0);
 	if not cam.isOpened():
-		raise Exception("Could no open cam");
+		raise Exception("Couldn't open cam.\n");
 
 	_, frame	= cam.read();
 	cam.release();
@@ -58,8 +58,8 @@ def main():
 
 	img	= img_get();
 
-	cv.namedWindow('img');
-	cv.imshow('img',  img);
+	cv.namedWindow("img");
+	cv.imshow("img", img);
 
 	wait_for_ESC();
 
