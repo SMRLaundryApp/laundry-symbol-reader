@@ -25,7 +25,7 @@ import libalx.stdio	as alx
 ################################################################################
 #	global variables						       #
 ################################################################################
-img_extension	= ".jpg"
+img_extension	= ".png"
 
 templates_names	= [
 	"machine_wash_normal",
