@@ -34,8 +34,8 @@ class Img_Source(Enum):
 ################################################################################
 #	global variables						       #
 ################################################################################
-img_source	= Img_Source.CAM;
-img_src_fname	= "foo.jpeg";
+img_source	= Img_Source.FILE;
+img_src_fname	= "samples/0.jpeg";
 
 templates_ext	= ".png";
 templates_dir	= "templates/";
@@ -92,6 +92,23 @@ def get_templates():
 
 	return	temp;
 
+def show_templates(win, templates):
+	for i in templates:
+		cv.imshow(win, templates[i]);
+		wait_for_ESC();
+
+def find_label(img):
+	gray	= cv.cvtColor(img, cv.COLOR_BGR2GRAY);
+	cv.imshow("img", gray);
+	wait_for_ESC();
+	tmp	= cv.medianBlur(gray, 101);
+	cv.imshow("img", tmp);
+	wait_for_ESC();
+
+def match_template(img, t):
+	r	= cv.matchTemplate(img, t, cv.TM_CCOEFF_NORMED);
+
+
 
 ################################################################################
 #	main								       #
@@ -105,13 +122,12 @@ def main():
 	img		= img_get();
 	templates	= get_templates();
 
-	for i in templates:
-		cv.imshow("img", templates[i]);
-		wait_for_ESC();
-	time.sleep(1);
+#	show_templates("img", templates);
 
 	cv.imshow("img", img);
 	wait_for_ESC();
+
+	find_label(img);
 
 	cv.destroyAllWindows();
 
