@@ -25,14 +25,13 @@ import libalx.stdio	as alx
 ################################################################################
 #	global variables						       #
 ################################################################################
-img_extension	= ".png"
-
+templates_ext	= ".png";
+templates_dir	= "templates/";
 templates_names	= [
-	"machine_wash_normal",
 	"bleach",
 	"iron",
-	"tumble_dry",
-	"dry_clean"
+	"machine_wash",
+	"tumble_dry"
 ];
 
 
@@ -56,12 +55,22 @@ def wait_for_ESC():
 		if k == ESC:
 			break;
 
-def get_template_imgs():
-	templates = dict();
-	for name in templates_names:
-		templates[name]	= cv.imread(name + img_extension, 0);
+def get_template(name):
+	fname	= templates_dir + name + templates_ext;
+	tmp	= cv.imread(fname, cv.IMREAD_GRAYSCALE);
+	_, t	= cv.threshold(tmp, 127, 255, cv.THRESH_BINARY);
+	alx.printf("Loaded template: %s\n", fname);
+	return	t;
 
-	return	templates;
+def get_templates():
+	temp = dict();
+
+	for t in templates_names:
+		t_not		= t + "_not";
+		temp[t]		= get_template(t);
+		temp[t_not]	= get_template(t_not);
+
+	return	temp;
 
 
 ################################################################################
@@ -71,11 +80,16 @@ def main():
 
 	alx.printf("Hello, world!\n");
 	alx.printf("We have %i days to finish this\n", 4);
+	cv.namedWindow("img");
 
 	img		= img_get();
-	templates	= get_template_imgs();
+	templates	= get_templates();
 
-	cv.namedWindow("img");
+	for i in templates:
+		cv.imshow("img", templates[i]);
+		wait_for_ESC();
+	time.sleep(1);
+
 	cv.imshow("img", img);
 
 	wait_for_ESC();
