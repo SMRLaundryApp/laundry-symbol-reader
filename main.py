@@ -177,9 +177,12 @@ def main():
 	wait_for_ESC();
 
 	rotrect	= find_label(img);
-	align_label(img, rotrect)
+	align_label(img, rotrect);
 
 	cv.destroyAllWindows();
+
+	alx.printf("F*** you %i and %i times python.  This is a C printf :)\n", 3000, 1);
+	alx.printf("I'm just playing python; you know I love you.\n");
 
 
 ################################################################################
