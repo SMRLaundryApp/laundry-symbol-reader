@@ -25,20 +25,29 @@ import libalx.stdio	as alx
 ################################################################################
 #	global variables						       #
 ################################################################################
+img_extension	= ".jpg"
+
+templates_names	= [
+	"machine_wash_normal",
+	"bleach",
+	"iron",
+	"tumble_dry",
+	"dry_clean"
+];
 
 
 ################################################################################
 #	functions							       #
 ################################################################################
 def img_get():
-	cam		= cv.VideoCapture(0);
+	cam	= cv.VideoCapture(0);
 	if not cam.isOpened():
 		raise Exception("Couldn't open cam.\n");
 
-	_, frame	= cam.read();
+	_, img	= cam.read();
 	cam.release();
 
-	return	frame;
+	return	img;
 
 def wait_for_ESC():
 	ESC	= 27;
@@ -46,6 +55,13 @@ def wait_for_ESC():
 		k	= cv.waitKey(5) & 0xFF;
 		if k == ESC:
 			break;
+
+def get_template_imgs():
+	templates = dict();
+	for name in templates_names:
+		templates[name]	= cv.imread(name + img_extension, 0);
+
+	return	templates;
 
 
 ################################################################################
@@ -56,7 +72,8 @@ def main():
 	alx.printf("Hello, world!\n");
 	alx.printf("We have %i days to finish this\n", 4);
 
-	img	= img_get();
+	img		= img_get();
+	templates	= get_template_imgs();
 
 	cv.namedWindow("img");
 	cv.imshow("img", img);
