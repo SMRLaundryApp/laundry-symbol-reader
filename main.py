@@ -101,8 +101,11 @@ def find_label(img):
 	gray	= cv.cvtColor(img, cv.COLOR_BGR2GRAY);
 	cv.imshow("img", gray);
 	wait_for_ESC();
-	tmp	= cv.medianBlur(gray, 101);
-	cv.imshow("img", tmp);
+	blur	= cv.medianBlur(gray, 101);
+	cv.imshow("img", blur);
+	wait_for_ESC();
+	_, thr	= cv.threshold(blur, 100, 255, cv.THRESH_BINARY);
+	cv.imshow("img", thr);
 	wait_for_ESC();
 
 def match_template(img, t):
