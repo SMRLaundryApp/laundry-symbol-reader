@@ -35,7 +35,7 @@ class Img_Source(Enum):
 #	global variables						       #
 ################################################################################
 img_source	= Img_Source.FILE;
-img_src_fname	= "samples/0.jpeg";
+img_src_fname	= "samples/1.jpeg";
 
 templates_ext	= ".png";
 templates_dir	= "templates/";
@@ -82,6 +82,7 @@ def get_template(name):
 	alx.printf("Loaded template: %s\n", fname);
 	return	t;
 
+
 def get_templates():
 	temp = dict();
 
@@ -97,6 +98,31 @@ def show_templates(win, templates):
 		cv.imshow(win, templates[i]);
 		wait_for_ESC();
 
+def img_rotate(img, x, y, angle):
+	map_mat	= cv.getRotationMatrix2D((y, x), angle, 1);
+	h, w	= img.shape[:2];
+	img	= cv.warpAffine(img, map_mat, (w, h),
+				flags=cv.INTER_LINEAR,
+				borderMode=cv.BORDER_CONSTANT, borderValue=0);
+	return	img;
+
+def img_rotate_2rect(img, rotrect):
+	ctr	= rotrect[0];
+	sz	= rotrect[1];
+	angle	= rotrect[2];
+	if angle < -45.0:
+		angle += 90.0;
+	alx.printf("ctr= (%i, %i); sz= (%i, %i); angle= %lf\n", int(ctr[0]),
+			int(ctr[1]), int(sz[0]), int(sz[1]), angle);
+	ctr	= tuple(map(int, ctr));
+	sz	= tuple(map(int, sz));
+	img	= img_rotate(img, ctr[0], ctr[1], angle);
+	return	img;
+
+def img_roi_set(img, x, y, w, h):
+	roi	= img[y:y+h, x:x+w].copy();
+	return	roi;
+
 def find_label(img):
 	gray	= cv.cvtColor(img, cv.COLOR_BGR2GRAY);
 	cv.imshow("img", gray);
@@ -104,19 +130,29 @@ def find_label(img):
 	blur	= cv.medianBlur(gray, 101);
 	cv.imshow("img", blur);
 	wait_for_ESC();
-	_, thr	= cv.threshold(blur, 100, 255, cv.THRESH_BINARY + cv.THRESH_OTSU);
+	_, thr	= cv.threshold(blur,160,255, cv.THRESH_BINARY);
 	cv.imshow("img", thr);
 	wait_for_ESC();
-	tmp	= cv.erode(thr, None, iterations=150,
+	tmp	= cv.erode(thr, None, iterations=80,
 					borderType=cv.BORDER_CONSTANT,
 					borderValue=0);
 	cv.imshow("img", tmp);
 	wait_for_ESC();
-	tmp	= cv.dilate(tmp, None, iterations=150,
+	tmp	= cv.dilate(tmp, None, iterations=80,
 					borderType=cv.BORDER_CONSTANT,
 					borderValue=0);
 	cv.imshow("img", tmp);
 	wait_for_ESC();
+	cnts,_ = cv.findContours(tmp, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+	cnt	= cnts[0];
+	rotrect	= cv.minAreaRect(cnt);
+	return	rotrect;
+
+def align_label(img, rotrect):
+	align	= img_rotate_2rect(img, rotrect);
+	cv.imshow("img", align);
+	wait_for_ESC();
+	return	align;
 
 def match_template(img, t):
 	r	= cv.matchTemplate(img, t, cv.TM_CCOEFF_NORMED);
@@ -140,7 +176,8 @@ def main():
 	cv.imshow("img", img);
 	wait_for_ESC();
 
-	find_label(img);
+	rotrect	= find_label(img);
+	align_label(img, rotrect)
 
 	cv.destroyAllWindows();
 
