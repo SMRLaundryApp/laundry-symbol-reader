@@ -104,8 +104,18 @@ def find_label(img):
 	blur	= cv.medianBlur(gray, 101);
 	cv.imshow("img", blur);
 	wait_for_ESC();
-	_, thr	= cv.threshold(blur, 100, 255, cv.THRESH_BINARY);
+	_, thr	= cv.threshold(blur, 100, 255, cv.THRESH_BINARY + cv.THRESH_OTSU);
 	cv.imshow("img", thr);
+	wait_for_ESC();
+	tmp	= cv.erode(thr, None, iterations=150,
+					borderType=cv.BORDER_CONSTANT,
+					borderValue=0);
+	cv.imshow("img", tmp);
+	wait_for_ESC();
+	tmp	= cv.dilate(tmp, None, iterations=150,
+					borderType=cv.BORDER_CONSTANT,
+					borderValue=0);
+	cv.imshow("img", tmp);
 	wait_for_ESC();
 
 def match_template(img, t):
