@@ -15,6 +15,7 @@
 #	imports								       #
 ################################################################################
 import time
+from enum	import Enum
 
 import cv2		as cv
 import numpy		as np
@@ -23,8 +24,19 @@ import libalx.stdio	as alx
 
 
 ################################################################################
+#	enum								       #
+################################################################################
+class Img_Source(Enum):
+	CAM	= 1;
+	FILE	= 2;
+
+
+################################################################################
 #	global variables						       #
 ################################################################################
+img_source	= Img_Source.FILE;
+img_src_fname	= "foo.jpeg";
+
 templates_ext	= ".png";
 templates_dir	= "templates/";
 templates_names	= [
@@ -38,13 +50,21 @@ templates_names	= [
 ################################################################################
 #	functions							       #
 ################################################################################
-def img_get():
+def cam_get():
 	cam	= cv.VideoCapture(0);
 	if not cam.isOpened():
 		raise Exception("Couldn't open cam.\n");
 
 	_, img	= cam.read();
 	cam.release();
+
+	return	img;
+
+def img_get():
+	if img_source == Img_Source.CAM:
+		img	= cam_get();
+	elif img_source == Img_Source.FILE:
+		img	= cv.imread(img_src_fname);
 
 	return	img;
 
@@ -91,7 +111,6 @@ def main():
 	time.sleep(1);
 
 	cv.imshow("img", img);
-
 	wait_for_ESC();
 
 	cv.destroyAllWindows();
