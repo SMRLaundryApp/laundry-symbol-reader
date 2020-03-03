@@ -17,10 +17,10 @@
 import time
 from enum	import Enum
 
-import cv2		as cv
-import numpy		as np
+import cv2	as cv
+import numpy	as np
 
-import libalx.stdio	as alx
+import libalx.printf	as alx
 
 
 ################################################################################
@@ -34,7 +34,7 @@ class Img_Source(Enum):
 ################################################################################
 #	global variables						       #
 ################################################################################
-img_source	= Img_Source.FILE;
+img_source	= Img_Source.CAM;
 img_src_fname	= "foo.jpeg";
 
 templates_ext	= ".png";
