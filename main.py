@@ -38,7 +38,7 @@ class Img_Source(Enum):
 #	global variables						       #
 ################################################################################
 img_source	= Img_Source.FILE;
-img_src_fname	= "samples/1.jpeg";
+img_src_fname	= "samples/2.jpeg";
 
 templates_ext	= ".png";
 templates_dir	= "templates/";
@@ -127,13 +127,17 @@ def img_roi_set(img, x, y, w, h):
 	return	roi;
 
 def find_label(img):
-	gray	= cv.cvtColor(img, cv.COLOR_BGR2GRAY);
-	cv.imshow("img", gray);
+#	gray	= cv.cvtColor(img, cv.COLOR_BGR2GRAY);
+	hsv	= cv.cvtColor(img, cv.COLOR_BGR2HSV);
+	cv.imshow("img", hsv);
 	wait_for_ESC();
-	blur	= cv.medianBlur(gray, 101);
+	s	= hsv[:,:,1];
+	cv.imshow("img", s);
+	wait_for_ESC();
+	blur	= cv.medianBlur(s, 71);
 	cv.imshow("img", blur);
 	wait_for_ESC();
-	_, thr	= cv.threshold(blur,160,255, cv.THRESH_BINARY);
+	_, thr	= cv.threshold(blur,30,255, cv.THRESH_BINARY_INV);
 	cv.imshow("img", thr);
 	wait_for_ESC();
 	tmp	= cv.erode(thr, None, iterations=80,
@@ -156,6 +160,18 @@ def align_label(img, rotrect):
 	cv.imshow("img", align);
 	wait_for_ESC();
 	return	align;
+
+def crop_label(img, rotrect):
+	ctr	= rotrect[0];
+	sz	= rotrect[1];
+	x	= int(ctr[0] - sz[0] / 2);
+	y	= int(ctr[1] - sz[1] / 2);
+	w	= int(sz[0]);
+	h	= int(sz[1]);
+	roi	= img_roi_set(img, x, y, w, h);
+	cv.imshow("img", roi);
+	wait_for_ESC();
+	return	roi;
 
 def match_template(img, t):
 	r	= cv.matchTemplate(img, t, cv.TM_CCOEFF_NORMED);
@@ -180,7 +196,8 @@ def main():
 	wait_for_ESC();
 
 	rotrect	= find_label(img);
-	align_label(img, rotrect);
+	align	= align_label(img, rotrect);
+	roi	= crop_label(align, rotrect);
 
 	cv.destroyAllWindows();
 
