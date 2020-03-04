@@ -127,7 +127,6 @@ def img_roi_set(img, x, y, w, h):
 	return	roi;
 
 def find_label(img):
-#	gray	= cv.cvtColor(img, cv.COLOR_BGR2GRAY);
 	hsv	= cv.cvtColor(img, cv.COLOR_BGR2HSV);
 	cv.imshow("img", hsv);
 	wait_for_ESC();
@@ -137,7 +136,7 @@ def find_label(img):
 	blur	= cv.medianBlur(s, 71);
 	cv.imshow("img", blur);
 	wait_for_ESC();
-	_, thr	= cv.threshold(blur,30,255, cv.THRESH_BINARY_INV);
+	_, thr	= cv.threshold(blur, 30, 255, cv.THRESH_BINARY_INV);
 	cv.imshow("img", thr);
 	wait_for_ESC();
 	tmp	= cv.erode(thr, None, iterations=80,
@@ -171,7 +170,50 @@ def crop_label(img, rotrect):
 	roi	= img_roi_set(img, x, y, w, h);
 	cv.imshow("img", roi);
 	wait_for_ESC();
-	return	roi;
+	gray	= cv.cvtColor(roi, cv.COLOR_BGR2GRAY);
+	cv.imshow("img", gray);
+	wait_for_ESC();
+	blur	= cv.medianBlur(gray, 3);
+	cv.imshow("img", blur);
+	wait_for_ESC();
+	_, thr	= cv.threshold(blur, 50, 255, cv.THRESH_BINARY);
+	cv.imshow("img", thr);
+	wait_for_ESC();
+	return	thr;
+
+def find_symbols_loc(img):
+	cv.imshow("img", img);
+	wait_for_ESC();
+	inv	= cv.bitwise_not(img);
+	cv.imshow("img", inv);
+	wait_for_ESC();
+	cv.floodFill(img, None, (0, 0), 0);
+	cv.imshow("img", img);
+	wait_for_ESC();
+	filled	= cv.bitwise_or(img, inv);
+	cv.imshow("img", filled);
+	wait_for_ESC();
+	tmp	= cv.dilate(filled, None, iterations=2,
+					borderType=cv.BORDER_CONSTANT,
+					borderValue=0);
+	cv.imshow("img", tmp);
+	wait_for_ESC();
+	tmp	= cv.erode(tmp, None, iterations=2,
+					borderType=cv.BORDER_CONSTANT,
+					borderValue=0);
+	cv.imshow("img", tmp);
+	wait_for_ESC();
+	tmp	= cv.erode(tmp, None, iterations=10,
+					borderType=cv.BORDER_CONSTANT,
+					borderValue=0);
+	cv.imshow("img", tmp);
+	wait_for_ESC();
+	sym	= cv.dilate(tmp, None, iterations=10,
+					borderType=cv.BORDER_CONSTANT,
+					borderValue=0);
+	cv.imshow("img", sym);
+	wait_for_ESC();
+	return	sym;
 
 def match_template(img, t):
 	r	= cv.matchTemplate(img, t, cv.TM_CCOEFF_NORMED);
@@ -197,7 +239,9 @@ def main():
 
 	rotrect	= find_label(img);
 	align	= align_label(img, rotrect);
-	roi	= crop_label(align, rotrect);
+	label	= crop_label(align, rotrect);
+	symloc	= find_symbols_loc(label);
+	
 
 	cv.destroyAllWindows();
 
