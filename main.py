@@ -172,7 +172,11 @@ def orb_match_template(img, t):
 def orb_match_templates(img, temps):
 	for i in temps:
 		t	= temps[i];
-		orb_match_template(img, t);
+		img_filled	= fill_img(img);
+		img_norm	= crop_clean_symbol(img_filled);
+		t_filled	= fill_img(t);
+		t_norm		= crop_clean_symbol(t_filled);
+		orb_match_template(t_norm, img_norm);
 
 def match_templates(sym, temps):
 	best	= 0;
@@ -191,6 +195,19 @@ def match_templates(sym, temps):
 		return	best;
 	alx.printf("sym not detected\n");
 	return	"Not detected";
+
+def fill_img(img):
+	inv	= cv.bitwise_not(img);
+	cv.imshow("img", inv);
+	wait_for_ESC();
+	tmp	= img.copy();
+	cv.floodFill(tmp, None, (0, 0), 0);
+	cv.imshow("img", tmp);
+	wait_for_ESC();
+	filled	= cv.bitwise_or(tmp, inv);
+	cv.imshow("img", filled);
+	wait_for_ESC();
+	return	filled;
 
 ########
 # process
@@ -249,14 +266,7 @@ def find_symbols_loc(img):
 	_, thr	= cv.threshold(blur, 50, 255, cv.THRESH_BINARY);
 #	cv.imshow("img", thr);
 #	wait_for_ESC();
-	inv	= cv.bitwise_not(thr);
-#	cv.imshow("img", inv);
-#	wait_for_ESC();
-	tmp	= thr.copy();
-	cv.floodFill(tmp, None, (0, 0), 0);
-#	cv.imshow("img", tmp);
-#	wait_for_ESC();
-	filled	= cv.bitwise_or(tmp, inv);
+	filled	= fill_img(thr);
 #	cv.imshow("img", filled);
 #	wait_for_ESC();
 	tmp	= cv.dilate(filled, None, iterations=2,
@@ -320,28 +330,54 @@ def clean_symbols(syms):
 	syms_clean	= list();
 	for sym in syms:
 		inv	= cv.bitwise_not(sym);
-		cv.imshow("img", inv);
+#		cv.imshow("img", inv);
+#		wait_for_ESC();
 		tmp	= cv.dilate(inv, None, iterations=3,
 						borderType=cv.BORDER_CONSTANT,
 						borderValue=0);
-		cv.imshow("img", tmp);
-		wait_for_ESC();
+#		cv.imshow("img", tmp);
+#		wait_for_ESC();
 		cnts, _	= cv.findContours(tmp, cv.RETR_EXTERNAL,
 							cv.CHAIN_APPROX_SIMPLE);
 		cnt_i	= largest_cnt(cnts);
 		mask	= np.zeros(tmp.shape, np.uint8);
-		cv.imshow("img", mask);
-		wait_for_ESC();
+#		cv.imshow("img", mask);
+#		wait_for_ESC();
 		alx.printf("cnt is %i\n", cnt_i);
 		cv.drawContours(mask, cnts, cnt_i, 255, -1);
-		cv.imshow("img", mask);
-		wait_for_ESC();
+#		cv.imshow("img", mask);
+#		wait_for_ESC();
 		nsym_clean	= cv.bitwise_and(inv, mask);
-		cv.imshow("img", nsym_clean);
-		wait_for_ESC();
+#		cv.imshow("img", nsym_clean);
+#		wait_for_ESC();
 		sym_clean	= cv.bitwise_not(nsym_clean);
+		cv.imshow("img", sym_clean);
+		wait_for_ESC();
 		syms_clean.append(sym_clean);
 	return	syms_clean;
+
+def crop_clean_symbol(sym):
+	border	= cv.copyMakeBorder(sym, top=30, bottom=30, left=30, right=30,
+			borderType=cv.BORDER_CONSTANT, value=0);
+	cv.imshow("img", border);
+	wait_for_ESC();
+	cnts,_ = cv.findContours(border, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+
+	loc	= cv.minAreaRect(cnts[0]);
+	symloc	= [
+		[loc[0][0], loc[0][1]],
+		[loc[1][0] * 1.1, loc[1][1] * 1.1],
+		loc[2]
+	];
+	if symloc[1][0] < symloc[1][1]:
+		symloc[1][0] = symloc[1][1];
+	else:
+		symloc[1][1] = symloc[1][0];
+	symloc[2] = 0;
+	roi	= img_roi_2rrect(border, symloc);
+	cv.imshow("img", roi);
+	wait_for_ESC();
+	return	roi;
 
 
 
