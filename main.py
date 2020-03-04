@@ -174,9 +174,10 @@ def orb_match_templates(img, temps):
 		t	= temps[i];
 		img_filled	= fill_img(img);
 		img_norm	= crop_clean_symbol(img_filled);
+		img_base_n	= crop_base_symbol(img_norm);
 		t_filled	= fill_img(t);
 		t_norm		= crop_clean_symbol(t_filled);
-		orb_match_template(t_norm, img_norm);
+		orb_match_template(t_norm, img_base_n);
 
 def match_templates(sym, temps):
 	best	= 0;
@@ -198,12 +199,12 @@ def match_templates(sym, temps):
 
 def fill_img(img):
 	inv	= cv.bitwise_not(img);
-	cv.imshow("img", inv);
-	wait_for_ESC();
+#	cv.imshow("img", inv);
+#	wait_for_ESC();
 	tmp	= img.copy();
 	cv.floodFill(tmp, None, (0, 0), 0);
-	cv.imshow("img", tmp);
-	wait_for_ESC();
+#	cv.imshow("img", tmp);
+#	wait_for_ESC();
 	filled	= cv.bitwise_or(tmp, inv);
 	cv.imshow("img", filled);
 	wait_for_ESC();
@@ -343,7 +344,6 @@ def clean_symbols(syms):
 		mask	= np.zeros(tmp.shape, np.uint8);
 #		cv.imshow("img", mask);
 #		wait_for_ESC();
-		alx.printf("cnt is %i\n", cnt_i);
 		cv.drawContours(mask, cnts, cnt_i, 255, -1);
 #		cv.imshow("img", mask);
 #		wait_for_ESC();
@@ -357,16 +357,16 @@ def clean_symbols(syms):
 	return	syms_clean;
 
 def crop_clean_symbol(sym):
-	border	= cv.copyMakeBorder(sym, top=30, bottom=30, left=30, right=30,
+	border	= cv.copyMakeBorder(sym, top=60, bottom=60, left=60, right=60,
 			borderType=cv.BORDER_CONSTANT, value=0);
-	cv.imshow("img", border);
-	wait_for_ESC();
+#	cv.imshow("img", border);
+#	wait_for_ESC();
 	cnts,_ = cv.findContours(border, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
-
-	loc	= cv.minAreaRect(cnts[0]);
+	i	= largest_cnt(cnts);
+	loc	= cv.minAreaRect(cnts[i]);
 	symloc	= [
 		[loc[0][0], loc[0][1]],
-		[loc[1][0] * 1.1, loc[1][1] * 1.1],
+		[loc[1][0] * 1.3, loc[1][1] * 1.3],
 		loc[2]
 	];
 	if symloc[1][0] < symloc[1][1]:
@@ -379,6 +379,20 @@ def crop_clean_symbol(sym):
 	wait_for_ESC();
 	return	roi;
 
+def crop_base_symbol(sym):
+	cnts, _	= cv.findContours(sym, cv.RETR_EXTERNAL,
+						cv.CHAIN_APPROX_SIMPLE);
+	cnt_i	= largest_cnt(cnts);
+	mask	= np.zeros(sym.shape, np.uint8);
+#	cv.imshow("img", mask);
+#	wait_for_ESC();
+	cv.drawContours(mask, cnts, cnt_i, 255, -1);
+#	cv.imshow("img", mask);
+#	wait_for_ESC();
+	sym_base	= cv.bitwise_and(sym, mask);
+	cv.imshow("img", sym_base);
+	wait_for_ESC();
+	return	sym_base;
 
 
 ################################################################################
