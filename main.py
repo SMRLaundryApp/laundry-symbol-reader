@@ -143,30 +143,67 @@ def img_roi_2rrect(img, rrect):
 	roi	= img_roi_set(img, x, y, w, h);
 	return	roi;
 
-def match_template(img, t):
-	r	= cv.matchTemplate(img, t, cv.TM_CCOEFF_NORMED);
+def orb_match_template(img, t):
+	orb	= cv.ORB_create();
+	cv.imshow("img", img);
+	wait_for_ESC();
+	img	= cv.resize(img, t.shape[::-1]);
+	cv.imshow("img", img);
+	wait_for_ESC();
+	kp0, d0	= orb.detectAndCompute(img, None);
+	kp1, d1	= orb.detectAndCompute(img, None);
+	matcher	= cv.DescriptorMatcher_create("BruteForce-Hamming");
+	matches	= matcher.match(d1, d0);
+	matches	= sorted(matches, key = lambda x:x.distance);
+	imgmatx	= img.copy();
+	imgmatx	= cv.drawMatches(img, kp1, t, kp0, matches, imgmatx);
+	cv.imshow("img", imgmatx);
+	wait_for_ESC();
+
+def orb_match_templates(img, temps):
+	for i in temps:
+		t	= temps[i];
+		orb_match_template(img, t);
+
+def match_templates(sym, temps):
+	best	= 0;
+	res	= [[0]];
+	print (res);
+	thr	= 0.32;
+	for i in temps:
+		t	= temps[i];
+		r	= cv.matchTemplate(sym, t, cv.TM_CCOEFF_NORMED);
+		print(r);
+#		if r > res:
+#			res	= r;
+#			best	= i;
+	if res[0][0] >= thr:
+		alx.printf("sym string: %s\n", best);
+		return	best;
+	alx.printf("sym not detected\n");
+	return	"Not detected";
 
 ########
 # process
 
 def find_label(img):
 	hsv	= cv.cvtColor(img, cv.COLOR_BGR2HSV);
-	cv.imshow("img", hsv);
-	wait_for_ESC();
+#	cv.imshow("img", hsv);
+#	wait_for_ESC();
 	s	= hsv[:,:,1];
-	cv.imshow("img", s);
-	wait_for_ESC();
+#	cv.imshow("img", s);
+#	wait_for_ESC();
 	blur	= cv.medianBlur(s, 71);
-	cv.imshow("img", blur);
-	wait_for_ESC();
+#	cv.imshow("img", blur);
+#	wait_for_ESC();
 	_, thr	= cv.threshold(blur, 30, 255, cv.THRESH_BINARY_INV);
-	cv.imshow("img", thr);
-	wait_for_ESC();
+#	cv.imshow("img", thr);
+#	wait_for_ESC();
 	tmp	= cv.erode(thr, None, iterations=80,
 					borderType=cv.BORDER_CONSTANT,
 					borderValue=0);
-	cv.imshow("img", tmp);
-	wait_for_ESC();
+#	cv.imshow("img", tmp);
+#	wait_for_ESC();
 	tmp	= cv.dilate(tmp, None, iterations=80,
 					borderType=cv.BORDER_CONSTANT,
 					borderValue=0);
@@ -185,45 +222,49 @@ def align_label(img, rotrect):
 
 def crop_label(img, rotrect):
 	roi	= img_roi_2rrect(img, rotrect);
-	cv.imshow("img", roi);
+#	cv.imshow("img", roi);
+#	wait_for_ESC();
+	border	= cv.copyMakeBorder(roi, top=50, bottom=50, left=50, right=50,
+			borderType=cv.BORDER_CONSTANT, value=(255, 255, 255));
+	cv.imshow("img", border);
 	wait_for_ESC();
-	return	roi;
+	return	border;
 
 def find_symbols_loc(img):
 	gray	= cv.cvtColor(img, cv.COLOR_BGR2GRAY);
-	cv.imshow("img", gray);
-	wait_for_ESC();
+#	cv.imshow("img", gray);
+#	wait_for_ESC();
 	blur	= cv.medianBlur(gray, 3);
-	cv.imshow("img", blur);
-	wait_for_ESC();
+#	cv.imshow("img", blur);
+#	wait_for_ESC();
 	_, thr	= cv.threshold(blur, 50, 255, cv.THRESH_BINARY);
-	cv.imshow("img", thr);
-	wait_for_ESC();
+#	cv.imshow("img", thr);
+#	wait_for_ESC();
 	inv	= cv.bitwise_not(thr);
-	cv.imshow("img", inv);
-	wait_for_ESC();
+#	cv.imshow("img", inv);
+#	wait_for_ESC();
 	tmp	= thr.copy();
 	cv.floodFill(tmp, None, (0, 0), 0);
-	cv.imshow("img", tmp);
-	wait_for_ESC();
+#	cv.imshow("img", tmp);
+#	wait_for_ESC();
 	filled	= cv.bitwise_or(tmp, inv);
-	cv.imshow("img", filled);
-	wait_for_ESC();
+#	cv.imshow("img", filled);
+#	wait_for_ESC();
 	tmp	= cv.dilate(filled, None, iterations=2,
 					borderType=cv.BORDER_CONSTANT,
 					borderValue=0);
-	cv.imshow("img", tmp);
-	wait_for_ESC();
+#	cv.imshow("img", tmp);
+#	wait_for_ESC();
 	tmp	= cv.erode(tmp, None, iterations=2,
 					borderType=cv.BORDER_CONSTANT,
 					borderValue=0);
-	cv.imshow("img", tmp);
-	wait_for_ESC();
+#	cv.imshow("img", tmp);
+#	wait_for_ESC();
 	tmp	= cv.erode(tmp, None, iterations=10,
 					borderType=cv.BORDER_CONSTANT,
 					borderValue=0);
-	cv.imshow("img", tmp);
-	wait_for_ESC();
+#	cv.imshow("img", tmp);
+#	wait_for_ESC();
 	syms	= cv.dilate(tmp, None, iterations=10,
 					borderType=cv.BORDER_CONSTANT,
 					borderValue=0);
@@ -238,34 +279,33 @@ def find_symbols(img):
 		s_	= cv.minAreaRect(cnt);
 		sym	= [
 			[s_[0][0], s_[0][1]],
-			[s_[1][0], s_[1][1]],
+			[s_[1][0] * 1.8, s_[1][1] * 1.8],
 			s_[2]
 		];
 		if sym[1][0] < sym[1][1]:
 			sym[1][0] = sym[1][1];
 		else:
 			sym[1][1] = sym[1][0];
-		sym[1][0] *= 1.5;
-		sym[1][1] *= 2.0;
 		sym[2]	= 0;
 		syms.append(sym);
 	return	syms;
 
-def show_symbols(img, syms):
-	cv.imshow("img", img);
-	wait_for_ESC();
-	for sym in syms:
-		roi	= img_roi_2rrect(img, sym);
-		cv.imshow("img", roi);
-		wait_for_ESC();
+def crop_symbols(img, symlocs):
+#	cv.imshow("img", img);
+#	wait_for_ESC();
+	syms	= list();
+	for symloc in symlocs:
+		roi	= img_roi_2rrect(img, symloc);
+#		cv.imshow("img", roi);
+#		wait_for_ESC();
 		gray	= cv.cvtColor(roi, cv.COLOR_BGR2GRAY);
-		cv.imshow("img", gray);
-		wait_for_ESC();
-		_, thr	= cv.threshold(gray, 127, 255,
-					cv.THRESH_BINARY + cv.THRESH_OTSU);
+#		cv.imshow("img", gray);
+#		wait_for_ESC();
+		_, thr	= cv.threshold(gray, 64, 255, cv.THRESH_BINARY);
 		cv.imshow("img", thr);
 		wait_for_ESC();
-	return	None;
+		syms.append(thr);
+	return	syms;
 
 
 
@@ -289,9 +329,13 @@ def main():
 	rotrect	= find_label(img);
 	align	= align_label(img, rotrect);
 	label	= crop_label(align, rotrect);
-	symlocs	= find_symbols_loc(label);
-	syms	= find_symbols(symlocs);
-	show_symbols(label, syms);
+	cnts	= find_symbols_loc(label);
+	symlocs	= find_symbols(cnts);
+	syms	= crop_symbols(label, symlocs);
+	for sym in syms:
+		cv.imshow("img", sym);
+		wait_for_ESC();
+		orb_match_templates(sym, templates);
 	
 
 	cv.destroyAllWindows();
