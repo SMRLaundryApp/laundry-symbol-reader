@@ -29,7 +29,7 @@ import libalx.printf	as alx
 ################################################################################
 #	DBG								       #
 ################################################################################
-DBG	= 0;
+DBG	= 3;
 
 def dbg_printf(dbg, fmt, *args):
 	if (dbg > DBG):
@@ -61,12 +61,13 @@ class Img_Source(Enum):
 #	global variables						       #
 ################################################################################
 img_source	= Img_Source.FILE;
-img_src_fname	= "samples/2.jpeg";
+img_src_fname	= "samples/0.jpeg";
 
 templates_ext	= ".png";
 templates_dir	= "templates/";
 templates_names	= [
 	"bleach",
+	"dry_clean",
 	"iron",
 	"machine_wash",
 	"tumble_dry"
@@ -217,21 +218,26 @@ def cmp_template(t, img):
 	img_n	= cv.resize(img, t.shape[::-1]);
 	diff	= cv.bitwise_xor(t, img_n);
 	dbg_show(3, "img", diff);
-	pix_t	= cv.countNonZero(t);
-	pix_img	= cv.countNonZero(img_n);
-	pix_dif	= cv.countNonZero(diff);
-	dbg_printf(3, "t: %i, i: %i, d: %i\t", pix_t, pix_img, pix_dif);
-	match_t	= (pix_t - pix_dif) / pix_t;
-	match_i	= (pix_img - pix_dif) / pix_img;
-	if (match_t < 0):
-		match_t	= 0;
-	if (match_i < 0):
-		match_i	= 0;
-	dbg_printf(3, "mt: %.3lf, mi: %.3lf\t", match_t, match_i);
-	if match_t > match_i:
-		match	= match_t;
-	else:
-		match	= match_i;
+	and_	= cv.bitwise_and(t, img_n);
+	dbg_show(3, "img", and_);
+	nand	= cv.bitwise_not(and_);
+	dbg_show(3, "img", nand);
+	nande	= cv.erode(nand, None, iterations=2,
+						borderType=cv.BORDER_CONSTANT,
+						borderValue=0);
+	dbg_show(3, "img", nande);
+	diffd	= cv.dilate(diff, None, iterations=2,
+						borderType=cv.BORDER_CONSTANT,
+						borderValue=0);
+	dbg_show(3, "img", diffd);
+	diffmsk	= cv.bitwise_and(diffd, nande);
+	dbg_show(2, "img", diffmsk);
+	pix_and	= cv.countNonZero(and_);
+	pix_dif	= cv.countNonZero(diffmsk);
+	dbg_printf(3, "and: %i, dif: %i\t", pix_and, pix_dif);
+	match	= (pix_and - pix_dif) / pix_and;
+	if (match < 0):
+		match	= 0;
 	dbg_printf(2, "match: %.3lf\n", match);
 	return	match;
 
