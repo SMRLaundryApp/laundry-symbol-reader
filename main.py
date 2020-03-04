@@ -89,7 +89,6 @@ def get_template(name):
 	alx.printf("Loaded template: %s\n", fname);
 	return	t;
 
-
 def get_templates():
 	temp = dict();
 
@@ -142,6 +141,16 @@ def img_roi_2rrect(img, rrect):
 	h	= int(sz[1]);
 	roi	= img_roi_set(img, x, y, w, h);
 	return	roi;
+
+def largest_cnt(cnts):
+	A	= cv.contourArea(cnts[0]);
+	cnt	= 0;
+	for i in range(len(cnts)):
+		a	= cv.contourArea(cnts[i]);
+		if a > A:
+			A	= a;
+			cnt	= i;
+	return	cnt;
 
 def orb_match_template(img, t):
 	orb	= cv.ORB_create();
@@ -307,6 +316,33 @@ def crop_symbols(img, symlocs):
 		syms.append(thr);
 	return	syms;
 
+def clean_symbols(syms):
+	syms_clean	= list();
+	for sym in syms:
+		inv	= cv.bitwise_not(sym);
+		cv.imshow("img", inv);
+		tmp	= cv.dilate(inv, None, iterations=3,
+						borderType=cv.BORDER_CONSTANT,
+						borderValue=0);
+		cv.imshow("img", tmp);
+		wait_for_ESC();
+		cnts, _	= cv.findContours(tmp, cv.RETR_EXTERNAL,
+							cv.CHAIN_APPROX_SIMPLE);
+		cnt_i	= largest_cnt(cnts);
+		mask	= np.zeros(tmp.shape, np.uint8);
+		cv.imshow("img", mask);
+		wait_for_ESC();
+		alx.printf("cnt is %i\n", cnt_i);
+		cv.drawContours(mask, cnts, cnt_i, 255, -1);
+		cv.imshow("img", mask);
+		wait_for_ESC();
+		nsym_clean	= cv.bitwise_and(inv, mask);
+		cv.imshow("img", nsym_clean);
+		wait_for_ESC();
+		sym_clean	= cv.bitwise_not(nsym_clean);
+		syms_clean.append(sym_clean);
+	return	syms_clean;
+
 
 
 ################################################################################
@@ -332,6 +368,7 @@ def main():
 	cnts	= find_symbols_loc(label);
 	symlocs	= find_symbols(cnts);
 	syms	= crop_symbols(label, symlocs);
+	syms	= clean_symbols(syms);
 	for sym in syms:
 		cv.imshow("img", sym);
 		wait_for_ESC();
