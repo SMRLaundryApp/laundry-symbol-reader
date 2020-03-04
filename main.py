@@ -152,24 +152,33 @@ def largest_cnt(cnts):
 			cnt	= i;
 	return	cnt;
 
-def orb_match_template(img, t):
-	orb	= cv.ORB_create();
-	cv.imshow("img", img);
+def cmp_template(t, img):
+	img_n	= cv.resize(img, t.shape[::-1]);
+	diff	= cv.bitwise_xor(t, img_n);
+	cv.imshow("img", diff);
 	wait_for_ESC();
-	img	= cv.resize(img, t.shape[::-1]);
-	cv.imshow("img", img);
-	wait_for_ESC();
-	kp0, d0	= orb.detectAndCompute(img, None);
-	kp1, d1	= orb.detectAndCompute(img, None);
-	matcher	= cv.DescriptorMatcher_create("BruteForce-Hamming");
-	matches	= matcher.match(d1, d0);
-	matches	= sorted(matches, key = lambda x:x.distance);
-	imgmatx	= img.copy();
-	imgmatx	= cv.drawMatches(img, kp1, t, kp0, matches, imgmatx);
-	cv.imshow("img", imgmatx);
-	wait_for_ESC();
+	pix_t	= cv.countNonZero(t);
+	pix_img	= cv.countNonZero(img_n);
+	pix_dif	= cv.countNonZero(diff);
+	alx.printf("t: %i, i: %i, d: %i\t", pix_t, pix_img, pix_dif);
+	match_t	= (pix_t - pix_dif) / pix_t;
+	match_i	= (pix_img - pix_dif) / pix_img;
+	if (match_t < 0):
+		match_t	= 0;
+	if (match_i < 0):
+		match_i	= 0;
+	alx.printf("mt: %.3lf, mi: %.3lf\t", match_t, match_i);
+	if match_t > match_i:
+		match	= match_t;
+	else:
+		match	= match_i;
+	alx.printf("match: %.3lf\n", match);
+	return	match;
 
-def orb_match_templates(img, temps):
+def match_templates(img, temps):
+	match	= 0;
+	code	= 0;
+	thr	= 0.4;
 	for i in temps:
 		t	= temps[i];
 		img_filled	= fill_img(img);
@@ -177,25 +186,14 @@ def orb_match_templates(img, temps):
 		img_base_n	= crop_base_symbol(img_norm);
 		t_filled	= fill_img(t);
 		t_norm		= crop_clean_symbol(t_filled);
-		orb_match_template(t_norm, img_base_n);
-
-def match_templates(sym, temps):
-	best	= 0;
-	res	= [[0]];
-	print (res);
-	thr	= 0.32;
-	for i in temps:
-		t	= temps[i];
-		r	= cv.matchTemplate(sym, t, cv.TM_CCOEFF_NORMED);
-		print(r);
-#		if r > res:
-#			res	= r;
-#			best	= i;
-	if res[0][0] >= thr:
-		alx.printf("sym string: %s\n", best);
-		return	best;
-	alx.printf("sym not detected\n");
-	return	"Not detected";
+		m		= cmp_template(t_norm, img_base_n);
+		if m > match:
+			code	= i;
+			match	= m;
+	if match < thr:
+		code	= "error";
+	alx.printf("%s (match: %.3lf)\n", code, match);
+	return	code;
 
 def fill_img(img):
 	inv	= cv.bitwise_not(img);
@@ -422,7 +420,7 @@ def main():
 	for sym in syms:
 		cv.imshow("img", sym);
 		wait_for_ESC();
-		orb_match_templates(sym, templates);
+		match_templates(sym, templates);
 	
 
 	cv.destroyAllWindows();
