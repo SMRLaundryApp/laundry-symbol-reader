@@ -381,7 +381,7 @@ def match_templates(img, temps):
 def main():
 
 	dbg_printf(0, "Hello, world!\n");
-	dbg_printf(0, "We have %i days to finish this\n", 4);
+	dbg_printf(0, "We have %i days to finish this\n", 2);
 	if (DBG):
 		cv.namedWindow("img");
 
