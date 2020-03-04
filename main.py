@@ -27,6 +27,29 @@ import libalx.printf	as alx
 
 
 ################################################################################
+#	DBG								       #
+################################################################################
+DBG	= 0;
+
+def dbg_printf(dbg, fmt, *args):
+	if (dbg > DBG):
+		return	None;
+	alx.printf(fmt % args);
+	return	None;
+
+def dbg_show(dbg, win, img):
+	if (dbg > DBG):
+		return	None;
+	cv.imshow(win, img);
+	wait_for_ESC();
+	return	None;
+
+def dbg_show_templates(dbg, win, templates):
+	for i in templates:
+		dbg_show(dbg, win, templates[i]);
+
+
+################################################################################
 #	enum								       #
 ################################################################################
 class Img_Source(Enum):
@@ -86,7 +109,7 @@ def get_template(name):
 	fname	= templates_dir + name + templates_ext;
 	tmp	= cv.imread(fname, cv.IMREAD_GRAYSCALE);
 	_, t	= cv.threshold(tmp, 127, 255, cv.THRESH_BINARY);
-	alx.printf("Loaded template: %s\n", fname);
+	dbg_printf(2, "Loaded template: %s\n", fname);
 	return	t;
 
 def get_templates():
@@ -98,11 +121,6 @@ def get_templates():
 		temp[t_not]	= get_template(t_not);
 
 	return	temp;
-
-def show_templates(win, templates):
-	for i in templates:
-		cv.imshow(win, templates[i]);
-		wait_for_ESC();
 
 ########
 # cv
@@ -121,7 +139,7 @@ def img_rotate_2rect(img, rotrect):
 	angle	= rotrect[2];
 	if angle < -45.0:
 		angle += 90.0;
-	alx.printf("ctr= (%i, %i); sz= (%i, %i); angle= %lf\n", int(ctr[0]),
+	dbg_printf(2, "ctr= (%i, %i); sz= (%i, %i); angle= %lf\n", int(ctr[0]),
 			int(ctr[1]), int(sz[0]), int(sz[1]), angle);
 	ctr	= tuple(map(int, ctr));
 	sz	= tuple(map(int, sz));
@@ -152,88 +170,91 @@ def largest_cnt(cnts):
 			cnt	= i;
 	return	cnt;
 
+def fill_img(img):
+	inv	= cv.bitwise_not(img);
+	tmp	= img.copy();
+	cv.floodFill(tmp, None, (0, 0), 0);
+	filled	= cv.bitwise_or(tmp, inv);
+	return	filled;
+
+########
+# helpers
+
+def crop_clean_symbol(sym):
+	border	= cv.copyMakeBorder(sym, top=60, bottom=60, left=60, right=60,
+			borderType=cv.BORDER_CONSTANT, value=0);
+	dbg_show(3, "img", border);
+	cnts,_ = cv.findContours(border, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+	i	= largest_cnt(cnts);
+	loc	= cv.minAreaRect(cnts[i]);
+	symloc	= [
+		[loc[0][0], loc[0][1]],
+		[loc[1][0] * 1.3, loc[1][1] * 1.3],
+		loc[2]
+	];
+	if symloc[1][0] < symloc[1][1]:
+		symloc[1][0] = symloc[1][1];
+	else:
+		symloc[1][1] = symloc[1][0];
+	symloc[2] = 0;
+	roi	= img_roi_2rrect(border, symloc);
+	dbg_show(2, "img", roi);
+	return	roi;
+
+def crop_base_symbol(sym):
+	cnts, _	= cv.findContours(sym, cv.RETR_EXTERNAL,
+						cv.CHAIN_APPROX_SIMPLE);
+	cnt_i	= largest_cnt(cnts);
+	mask	= np.zeros(sym.shape, np.uint8);
+	dbg_show(3, "img", mask);
+	cv.drawContours(mask, cnts, cnt_i, 255, -1);
+	dbg_show(3, "img", mask);
+	sym_base	= cv.bitwise_and(sym, mask);
+	dbg_show(2, "img", sym_base);
+	return	sym_base;
+
 def cmp_template(t, img):
 	img_n	= cv.resize(img, t.shape[::-1]);
 	diff	= cv.bitwise_xor(t, img_n);
-	cv.imshow("img", diff);
-	wait_for_ESC();
+	dbg_show(3, "img", diff);
 	pix_t	= cv.countNonZero(t);
 	pix_img	= cv.countNonZero(img_n);
 	pix_dif	= cv.countNonZero(diff);
-	alx.printf("t: %i, i: %i, d: %i\t", pix_t, pix_img, pix_dif);
+	dbg_printf(3, "t: %i, i: %i, d: %i\t", pix_t, pix_img, pix_dif);
 	match_t	= (pix_t - pix_dif) / pix_t;
 	match_i	= (pix_img - pix_dif) / pix_img;
 	if (match_t < 0):
 		match_t	= 0;
 	if (match_i < 0):
 		match_i	= 0;
-	alx.printf("mt: %.3lf, mi: %.3lf\t", match_t, match_i);
+	dbg_printf(3, "mt: %.3lf, mi: %.3lf\t", match_t, match_i);
 	if match_t > match_i:
 		match	= match_t;
 	else:
 		match	= match_i;
-	alx.printf("match: %.3lf\n", match);
+	dbg_printf(2, "match: %.3lf\n", match);
 	return	match;
-
-def match_templates(img, temps):
-	match	= 0;
-	code	= 0;
-	thr	= 0.4;
-	for i in temps:
-		t	= temps[i];
-		img_filled	= fill_img(img);
-		img_norm	= crop_clean_symbol(img_filled);
-		img_base_n	= crop_base_symbol(img_norm);
-		t_filled	= fill_img(t);
-		t_norm		= crop_clean_symbol(t_filled);
-		m		= cmp_template(t_norm, img_base_n);
-		if m > match:
-			code	= i;
-			match	= m;
-	if match < thr:
-		code	= "error";
-	alx.printf("%s (match: %.3lf)\n", code, match);
-	return	code;
-
-def fill_img(img):
-	inv	= cv.bitwise_not(img);
-#	cv.imshow("img", inv);
-#	wait_for_ESC();
-	tmp	= img.copy();
-	cv.floodFill(tmp, None, (0, 0), 0);
-#	cv.imshow("img", tmp);
-#	wait_for_ESC();
-	filled	= cv.bitwise_or(tmp, inv);
-	cv.imshow("img", filled);
-	wait_for_ESC();
-	return	filled;
 
 ########
 # process
 
 def find_label(img):
 	hsv	= cv.cvtColor(img, cv.COLOR_BGR2HSV);
-#	cv.imshow("img", hsv);
-#	wait_for_ESC();
+	dbg_show(2, "img", hsv);
 	s	= hsv[:,:,1];
-#	cv.imshow("img", s);
-#	wait_for_ESC();
+	dbg_show(2, "img", s);
 	blur	= cv.medianBlur(s, 71);
-#	cv.imshow("img", blur);
-#	wait_for_ESC();
+	dbg_show(2, "img", blur);
 	_, thr	= cv.threshold(blur, 30, 255, cv.THRESH_BINARY_INV);
-#	cv.imshow("img", thr);
-#	wait_for_ESC();
+	dbg_show(2, "img", thr);
 	tmp	= cv.erode(thr, None, iterations=80,
 					borderType=cv.BORDER_CONSTANT,
 					borderValue=0);
-#	cv.imshow("img", tmp);
-#	wait_for_ESC();
+	dbg_show(2, "img", tmp);
 	tmp	= cv.dilate(tmp, None, iterations=80,
 					borderType=cv.BORDER_CONSTANT,
 					borderValue=0);
-	cv.imshow("img", tmp);
-	wait_for_ESC();
+	dbg_show(1, "img", tmp);
 	cnts,_ = cv.findContours(tmp, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 	cnt	= cnts[0];
 	rotrect	= cv.minAreaRect(cnt);
@@ -241,53 +262,42 @@ def find_label(img):
 
 def align_label(img, rotrect):
 	align	= img_rotate_2rect(img, rotrect);
-	cv.imshow("img", align);
-	wait_for_ESC();
+	dbg_show(1, "img", align);
 	return	align;
 
 def crop_label(img, rotrect):
 	roi	= img_roi_2rrect(img, rotrect);
-#	cv.imshow("img", roi);
-#	wait_for_ESC();
+	dbg_show(2, "img", roi);
 	border	= cv.copyMakeBorder(roi, top=50, bottom=50, left=50, right=50,
 			borderType=cv.BORDER_CONSTANT, value=(255, 255, 255));
-	cv.imshow("img", border);
-	wait_for_ESC();
+	dbg_show(1, "img", border);
 	return	border;
 
 def find_symbols_loc(img):
 	gray	= cv.cvtColor(img, cv.COLOR_BGR2GRAY);
-#	cv.imshow("img", gray);
-#	wait_for_ESC();
+	dbg_show(2, "img", gray);
 	blur	= cv.medianBlur(gray, 3);
-#	cv.imshow("img", blur);
-#	wait_for_ESC();
+	dbg_show(2, "img", blur);
 	_, thr	= cv.threshold(blur, 50, 255, cv.THRESH_BINARY);
-#	cv.imshow("img", thr);
-#	wait_for_ESC();
+	dbg_show(2, "img", thr);
 	filled	= fill_img(thr);
-#	cv.imshow("img", filled);
-#	wait_for_ESC();
+	dbg_show(2, "img", filled);
 	tmp	= cv.dilate(filled, None, iterations=2,
 					borderType=cv.BORDER_CONSTANT,
 					borderValue=0);
-#	cv.imshow("img", tmp);
-#	wait_for_ESC();
+	dbg_show(2, "img", tmp);
 	tmp	= cv.erode(tmp, None, iterations=2,
 					borderType=cv.BORDER_CONSTANT,
 					borderValue=0);
-#	cv.imshow("img", tmp);
-#	wait_for_ESC();
+	dbg_show(2, "img", tmp);
 	tmp	= cv.erode(tmp, None, iterations=10,
 					borderType=cv.BORDER_CONSTANT,
 					borderValue=0);
-#	cv.imshow("img", tmp);
-#	wait_for_ESC();
+	dbg_show(2, "img", tmp);
 	syms	= cv.dilate(tmp, None, iterations=10,
 					borderType=cv.BORDER_CONSTANT,
 					borderValue=0);
-	cv.imshow("img", syms);
-	wait_for_ESC();
+	dbg_show(1, "img", syms);
 	return	syms;
 
 def find_symbols(img):
@@ -309,19 +319,15 @@ def find_symbols(img):
 	return	syms;
 
 def crop_symbols(img, symlocs):
-#	cv.imshow("img", img);
-#	wait_for_ESC();
+	dbg_show(2, "img", img);
 	syms	= list();
 	for symloc in symlocs:
 		roi	= img_roi_2rrect(img, symloc);
-#		cv.imshow("img", roi);
-#		wait_for_ESC();
+		dbg_show(2, "img", roi);
 		gray	= cv.cvtColor(roi, cv.COLOR_BGR2GRAY);
-#		cv.imshow("img", gray);
-#		wait_for_ESC();
+		dbg_show(2, "img", gray);
 		_, thr	= cv.threshold(gray, 64, 255, cv.THRESH_BINARY);
-		cv.imshow("img", thr);
-		wait_for_ESC();
+		dbg_show(1, "img", thr);
 		syms.append(thr);
 	return	syms;
 
@@ -329,68 +335,44 @@ def clean_symbols(syms):
 	syms_clean	= list();
 	for sym in syms:
 		inv	= cv.bitwise_not(sym);
-#		cv.imshow("img", inv);
-#		wait_for_ESC();
+		dbg_show(2, "img", inv);
 		tmp	= cv.dilate(inv, None, iterations=3,
 						borderType=cv.BORDER_CONSTANT,
 						borderValue=0);
-#		cv.imshow("img", tmp);
-#		wait_for_ESC();
+		dbg_show(2, "img", tmp);
 		cnts, _	= cv.findContours(tmp, cv.RETR_EXTERNAL,
 							cv.CHAIN_APPROX_SIMPLE);
 		cnt_i	= largest_cnt(cnts);
 		mask	= np.zeros(tmp.shape, np.uint8);
-#		cv.imshow("img", mask);
-#		wait_for_ESC();
+		dbg_show(2, "img", mask);
 		cv.drawContours(mask, cnts, cnt_i, 255, -1);
-#		cv.imshow("img", mask);
-#		wait_for_ESC();
+		dbg_show(2, "img", mask);
 		nsym_clean	= cv.bitwise_and(inv, mask);
-#		cv.imshow("img", nsym_clean);
-#		wait_for_ESC();
+		dbg_show(2, "img", nsym_clean);
 		sym_clean	= cv.bitwise_not(nsym_clean);
-		cv.imshow("img", sym_clean);
-		wait_for_ESC();
+		dbg_show(1, "img", sym_clean);
 		syms_clean.append(sym_clean);
 	return	syms_clean;
 
-def crop_clean_symbol(sym):
-	border	= cv.copyMakeBorder(sym, top=60, bottom=60, left=60, right=60,
-			borderType=cv.BORDER_CONSTANT, value=0);
-#	cv.imshow("img", border);
-#	wait_for_ESC();
-	cnts,_ = cv.findContours(border, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
-	i	= largest_cnt(cnts);
-	loc	= cv.minAreaRect(cnts[i]);
-	symloc	= [
-		[loc[0][0], loc[0][1]],
-		[loc[1][0] * 1.3, loc[1][1] * 1.3],
-		loc[2]
-	];
-	if symloc[1][0] < symloc[1][1]:
-		symloc[1][0] = symloc[1][1];
-	else:
-		symloc[1][1] = symloc[1][0];
-	symloc[2] = 0;
-	roi	= img_roi_2rrect(border, symloc);
-	cv.imshow("img", roi);
-	wait_for_ESC();
-	return	roi;
-
-def crop_base_symbol(sym):
-	cnts, _	= cv.findContours(sym, cv.RETR_EXTERNAL,
-						cv.CHAIN_APPROX_SIMPLE);
-	cnt_i	= largest_cnt(cnts);
-	mask	= np.zeros(sym.shape, np.uint8);
-#	cv.imshow("img", mask);
-#	wait_for_ESC();
-	cv.drawContours(mask, cnts, cnt_i, 255, -1);
-#	cv.imshow("img", mask);
-#	wait_for_ESC();
-	sym_base	= cv.bitwise_and(sym, mask);
-	cv.imshow("img", sym_base);
-	wait_for_ESC();
-	return	sym_base;
+def match_templates(img, temps):
+	match	= 0;
+	code	= 0;
+	thr	= 0.4;
+	for i in temps:
+		t	= temps[i];
+		img_filled	= fill_img(img);
+		img_norm	= crop_clean_symbol(img_filled);
+		img_base_n	= crop_base_symbol(img_norm);
+		t_filled	= fill_img(t);
+		t_norm		= crop_clean_symbol(t_filled);
+		m		= cmp_template(t_norm, img_base_n);
+		if m > match:
+			code	= i;
+			match	= m;
+	if match < thr:
+		code	= "error";
+	dbg_printf(2, "%s (match: %.3lf)\n", code, match);
+	return	code;
 
 
 ################################################################################
@@ -398,17 +380,17 @@ def crop_base_symbol(sym):
 ################################################################################
 def main():
 
-	alx.printf("Hello, world!\n");
-	alx.printf("We have %i days to finish this\n", 4);
-	cv.namedWindow("img");
+	dbg_printf(0, "Hello, world!\n");
+	dbg_printf(0, "We have %i days to finish this\n", 4);
+	if (DBG):
+		cv.namedWindow("img");
 
 	img		= img_get();
 	templates	= get_templates();
 
-#	show_templates("img", templates);
+	dbg_show_templates(2, "img", templates);
 
-	cv.imshow("img", img);
-	wait_for_ESC();
+	dbg_show(1, "img", img);
 
 	rotrect	= find_label(img);
 	align	= align_label(img, rotrect);
@@ -417,16 +399,16 @@ def main():
 	symlocs	= find_symbols(cnts);
 	syms	= crop_symbols(label, symlocs);
 	syms	= clean_symbols(syms);
+	codes	= list();
 	for sym in syms:
-		cv.imshow("img", sym);
-		wait_for_ESC();
-		match_templates(sym, templates);
-	
+		code	= match_templates(sym, templates);
+		codes.append(code);
+		alx.printf("%s\n", code);
 
 	cv.destroyAllWindows();
 
-	alx.printf("F*** you %i and %i times python.  This is a C printf :)\n", 3000, 1);
-	alx.printf("I'm just playing python; you know I love you.\n");
+	dbg_printf(0, "F*** you %i and %i times python.  This is a C printf :)\n", 3000, 1);
+	dbg_printf(0, "I'm just playing python; you know I love you.\n");
 
 	return	1; # python always does fail, so return 1 ;)
 
