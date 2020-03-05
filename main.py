@@ -464,14 +464,9 @@ def main():
 	if (DBG):
 		cv.namedWindow("img");
 
-	img		= img_get();
-	templates	= get_templates();
-	templates_in	= get_templates_inner();
-
-	dbg_show_templates(2, "img", templates);
-	dbg_show_templates(2, "img", templates_in);
-
-	dbg_show(1, "img", img);
+	templates	= get_templates();			dbg_show_templates(2, "img", templates);
+	templates_in	= get_templates_inner();		dbg_show_templates(2, "img", templates_in);
+	img		= img_get();				dbg_show(1, "img", img);
 
 	rotrect	= find_label(img);
 	align	= align_label(img, rotrect);
