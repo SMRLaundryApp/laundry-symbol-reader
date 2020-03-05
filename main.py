@@ -31,7 +31,7 @@ import libalx.printf	as alx
 ################################################################################
 # 0: Only solution;  >=1 debugging info
 
-DBG	= 3;
+DBG	= 0;
 
 def dbg_printf(dbg, fmt, *args):
 	if (dbg > DBG):
@@ -275,13 +275,18 @@ def crop_base_symbol(sym):
 	sym_base	= cv.bitwise_and(sym, mask);		dbg_show(2, "img", sym_base);
 	return	sym_base;
 
-def cmp_template(t, img):
-	img_n	= cv.resize(img, t.shape[::-1]);
-	diff	= cv.bitwise_xor(t, img_n);			dbg_show(3, "img", diff);
-	and_	= cv.bitwise_and(t, img_n);			dbg_show(3, "img", and_);
+def cmp_template(t, img, tolerance):
+	if img.size < t.size:
+		img_n	= cv.resize(img, t.shape[::-1]);
+		t_n	= t;
+	else:
+		img_n	= img;
+		t_n	= cv.resize(t, img.shape[::-1]);
+	diff	= cv.bitwise_xor(t_n, img_n);			dbg_show(3, "img", diff);
+	and_	= cv.bitwise_and(t_n, img_n);			dbg_show(3, "img", and_);
 	nand	= cv.bitwise_not(and_);				dbg_show(3, "img", nand);
-	nande	= erode(nand, 2);				dbg_show(3, "img", nande);
-	diffd	= dilate(diff, 2);				dbg_show(3, "img", diffd);
+	nande	= erode(nand, tolerance);			dbg_show(3, "img", nande);
+	diffd	= dilate(diff, tolerance);			dbg_show(3, "img", diffd);
 	diffmsk	= cv.bitwise_and(diffd, nande);			dbg_show(2, "img", diffmsk);
 	pix_and	= cv.countNonZero(and_);
 	pix_dif	= cv.countNonZero(diffmsk);
@@ -323,21 +328,40 @@ def sym_out_code(sym):
 		return	"very_delicate";
 	if qty == 1:
 		return	"delicate";
-	return	"";
+	return	None;
 
 def norm_inner(sym):
-	border	= add_border(sym, 20, (255, 255, 255));		dbg_show(3, "img", border);
+	border	= add_border(sym, 20, 0);			dbg_show(3, "img", border);
+	blob	= dilate_erode(border, 5);			dbg_show(3, "img", blob);
+	cnts	= contours(blob);
+	i	= largest_cnt(cnts);
+	loc	= cv.minAreaRect(cnts[i]);
+	symloc	= [
+		[loc[0][0], loc[0][1]],
+		[loc[1][0] * 1.3, loc[1][1] * 1.3],
+		loc[2]
+	];
+	if symloc[1][0] < symloc[1][1]:
+		symloc[1][0] = symloc[1][1];
+	else:
+		symloc[1][1] = symloc[1][0];
+	symloc[2] = 0;
+	roi	= img_roi_2rrect(border, symloc);		dbg_show(2, "img", roi);
+
+	return	roi;
+
 
 def match_t_inner(sym, temps):
 	match	= 0;
 	code	= 0;
-	thr	= 0.4;
+	thr	= 0.1;
 	for i in temps:
-		t		= temps[i];
-		s_filled	= fill_img(sym);
-		s_norm		= norm_inner(s_filled);
-		t_filled	= fill_img(t);
-		m		= cmp_template(t_filled, s_filled);
+		t	= temps[i];				dbg_show(3, "img", t);
+		s_fill	= fill_img(sym);			dbg_show(3, "img", s_fill);
+		s_norm	= norm_inner(s_fill);			dbg_show(3, "img", s_norm);
+		t_fill	= fill_img(t);				dbg_show(3, "img", t_fill);
+		t_norm	= norm_inner(t_fill);			dbg_show(3, "img", t_norm);
+		m	= cmp_template(t_norm, s_norm, 0);
 		if m > match:
 			code	= i;
 			match	= m;
@@ -434,7 +458,7 @@ def match_templates(img, temps):
 		img_base_n	= crop_base_symbol(img_norm);
 		t_filled	= fill_img(t);
 		t_norm		= crop_clean_symbol(t_filled);
-		m		= cmp_template(t_norm, img_base_n);
+		m		= cmp_template(t_norm, img_base_n, 2);
 		if m > match:
 			code	= i;
 			match	= m;
@@ -443,15 +467,21 @@ def match_templates(img, temps):
 	dbg_printf(2, "%s (match: %.3lf)\n", code, match);
 	return	code;
 
-def find_details(img, code):
+def find_details(img, code, temps):
+	full_code	= code;
 	for c in templates_names:
 		dbg_printf(2, "%s =? %s\n", c, code);
 		if c == code:
 			dbg_printf(1, "%s;", code);
 			sym_i	= sym_inside(img);		dbg_show(1, "img", sym_i);
+			dbg_printf(2, "\n");
+			code_i	= match_t_inner(sym_i, temps);
+			full_code += "; " + code_i;		dbg_printf(1, " %s;", code_i);
 			sym_o	= sym_outside(img);		dbg_show(1, "img", sym_o);
 			code_o	= sym_out_code(sym_o);
-			dbg_printf(1, " %s\n", code_o);
+			if code_o:
+				full_code += "; " + code_o;	dbg_printf(1, " %s\n", code_o);
+	return	full_code;
 
 
 ################################################################################
@@ -477,11 +507,15 @@ def main():
 	syms	= clean_symbols(syms);
 	codes	= list();
 	for sym in syms:
-		dbg_show(0, "img", sym);
+		dbg_show(1, "img", sym);
 		code	= match_templates(sym, templates);
-		codes.append(code);
-		dbg_printf(0, "%s\n", code);
-		find_details(sym, code);
+		dbg_printf(1, "%s\n", code);
+		full_code	= find_details(sym, code, templates_in);
+		dbg_printf(1, "%s\n", full_code);
+		codes.append(full_code);
+
+	for code in codes:
+		alx.printf("%s\n", code);
 
 	cv.destroyAllWindows();
 
