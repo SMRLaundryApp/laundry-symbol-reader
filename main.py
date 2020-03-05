@@ -279,6 +279,15 @@ def sym_outside(sym):
 	dbg_show(2, "img", sym_out);
 	return	sym_out;
 
+def sym_out_code(sym):
+	cnts, _	= cv.findContours(sym, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+	qty	= len(cnts);
+	if qty == 2:
+		return	"very_delicate";
+	if qty == 1:
+		return	"delicate";
+	return	"";
+
 ########
 # process
 
@@ -422,10 +431,13 @@ def find_details(img, code):
 	for c in templates_names:
 		dbg_printf(2, "%s =? %s\n", c, code);
 		if c == code:
+			dbg_printf(1, "%s;", code);
 			sym_i	= sym_inside(img);
 			dbg_show(1, "img", sym_i);
 			sym_o	= sym_outside(img);
 			dbg_show(1, "img", sym_o);
+			code_o	= sym_out_code(sym_o);
+			dbg_printf(1, " %s\n", code_o);
 
 
 ################################################################################
