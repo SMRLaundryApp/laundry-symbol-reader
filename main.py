@@ -213,6 +213,15 @@ def fill_img(img):
 	filled	= cv.bitwise_or(tmp, inv);
 	return	filled;
 
+def contours(img):
+	cnts, _	= cv.findContours(img, cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE);
+	return	cnts;
+
+def add_border(img, sz, value):
+	border	= cv.copyMakeBorder(img, top=sz, bottom=sz, left=sz, right=sz,
+			borderType=cv.BORDER_CONSTANT, value=value);
+	return	border;
+
 def dilate(img, i):
 	dil	= cv.dilate(img, None, iterations=i,
 				borderType=cv.BORDER_CONSTANT, borderValue=0);
@@ -237,10 +246,9 @@ def erode_dilate(img, i):
 # helpers
 
 def crop_clean_symbol(sym):
-	border	= cv.copyMakeBorder(sym, top=60, bottom=60, left=60, right=60,
-			borderType=cv.BORDER_CONSTANT, value=0);
+	border	= add_border(sym, 60, 0);
 	dbg_show(3, "img", border);
-	cnts,_ = cv.findContours(border, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+	cnts	= contours(border);
 	i	= largest_cnt(cnts);
 	loc	= cv.minAreaRect(cnts[i]);
 	symloc	= [
@@ -258,8 +266,7 @@ def crop_clean_symbol(sym):
 	return	roi;
 
 def crop_base_symbol(sym):
-	cnts, _	= cv.findContours(sym, cv.RETR_EXTERNAL,
-						cv.CHAIN_APPROX_SIMPLE);
+	cnts	= contours(sym);
 	cnt_i	= largest_cnt(cnts);
 	mask	= np.zeros(sym.shape, np.uint8);
 	dbg_show(3, "img", mask);
@@ -297,8 +304,7 @@ def sym_inside(sym):
 	filld	= sym.copy();
 	cv.floodFill(filld, None, (0, 0), 0);
 	dbg_show(3, "img", filld);
-	cnts, _	= cv.findContours(filld, cv.RETR_EXTERNAL,
-						cv.CHAIN_APPROX_SIMPLE);
+	cnts	= contours(filld);
 	cnt_i	= largest_cnt(cnts);
 	mask	= np.zeros(sym.shape, np.uint8);
 	dbg_show(3, "img", mask);
@@ -316,7 +322,7 @@ def sym_outside(sym):
 	dbg_show(3, "img", sym);
 	filled	= fill_img(sym);
 	dbg_show(3, "img", filled);
-	cnts, _	= cv.findContours(filled, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+	cnts	= contours(filled);
 	i	= largest_cnt(cnts);
 	nmsk	= np.zeros(sym.shape, np.uint8);
 	dbg_show(3, "img", nmsk);
@@ -329,7 +335,7 @@ def sym_outside(sym):
 	return	sym_out;
 
 def sym_out_code(sym):
-	cnts, _	= cv.findContours(sym, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+	cnts	= contours(sym);
 	qty	= len(cnts);
 	if qty == 2:
 		return	"very_delicate";
@@ -338,8 +344,7 @@ def sym_out_code(sym):
 	return	"";
 
 def norm_inner(sym):
-	border	= cv.copyMakeBorder(sym, top=20, bottom=20, left=20, right=20,
-			borderType=cv.BORDER_CONSTANT, value=(255, 255, 255));
+	border	= add_border(sym, 20, (255, 255, 255));
 	dbg_show(3, "img", border);
 
 def match_t_inner(sym, temps):
@@ -349,7 +354,7 @@ def match_t_inner(sym, temps):
 	for i in temps:
 		t		= temps[i];
 		s_filled	= fill_img(sym);
-		
+		s_norm		= norm_inner(s_filled);
 		t_filled	= fill_img(t);
 		m		= cmp_template(t_filled, s_filled);
 		if m > match:
@@ -374,7 +379,7 @@ def find_label(img):
 	dbg_show(2, "img", thr);
 	tmp	= erode_dilate(thr, 80);
 	dbg_show(1, "img", tmp);
-	cnts,_ = cv.findContours(tmp, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+	cnts	= contours(tmp);
 	cnt	= cnts[0];
 	rotrect	= cv.minAreaRect(cnt);
 	return	rotrect;
@@ -387,8 +392,7 @@ def align_label(img, rotrect):
 def crop_label(img, rotrect):
 	roi	= img_roi_2rrect(img, rotrect);
 	dbg_show(2, "img", roi);
-	border	= cv.copyMakeBorder(roi, top=50, bottom=50, left=50, right=50,
-			borderType=cv.BORDER_CONSTANT, value=(255, 255, 255));
+	border	= add_border(roi, 50, (255, 255, 255));
 	dbg_show(1, "img", border);
 	return	border;
 
@@ -408,7 +412,7 @@ def find_symbols_loc(img):
 	return	syms;
 
 def find_symbols(img):
-	cnts,_ = cv.findContours(img, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+	cnts	= contours(img);
 	syms	= list();
 	for cnt in cnts:
 		s_	= cv.minAreaRect(cnt);
@@ -445,8 +449,7 @@ def clean_symbols(syms):
 		dbg_show(2, "img", inv);
 		tmp	= dilate(inv, 3);
 		dbg_show(2, "img", tmp);
-		cnts, _	= cv.findContours(tmp, cv.RETR_EXTERNAL,
-							cv.CHAIN_APPROX_SIMPLE);
+		cnts	= contours(tmp);
 		cnt_i	= largest_cnt(cnts);
 		mask	= np.zeros(tmp.shape, np.uint8);
 		dbg_show(2, "img", mask);
