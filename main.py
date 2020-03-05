@@ -31,7 +31,7 @@ import libalx.printf	as alx
 ################################################################################
 # 0: Only solution;  >=1 debugging info
 
-DBG	= 1;
+DBG	= 3;
 
 def dbg_printf(dbg, fmt, *args):
 	if (dbg > DBG):
@@ -73,6 +73,24 @@ templates_names	= [
 	"iron",
 	"machine_wash",
 	"tumble_dry"
+];
+t_inner_dir	= "templates/inner/";
+t_inner_names	= [
+	"1_dot",
+	"2_dot",
+	"3_dot",
+	"4_dot",
+	"5_dot",
+	"6_dot",
+	"30",
+	"40",
+	"50",
+	"60",
+	"95",
+	"A",
+	"F",
+	"P",
+	"W",
 ];
 
 
@@ -124,6 +142,21 @@ def get_templates():
 		temp[t_not]	= get_template(t_not);
 
 	return	temp;
+
+def get_t_inner(name):
+	fname	= t_inner_dir + name + templates_ext;
+	tmp	= cv.imread(fname, cv.IMREAD_GRAYSCALE);
+	_, t	= cv.threshold(tmp, 127, 255, cv.THRESH_BINARY);
+	dbg_printf(2, "Loaded template: %s\n", fname);
+	return	t;
+
+def get_templates_inner():
+	temp_in = dict();
+
+	for t in t_inner_names:
+		temp_in[t]	= get_t_inner(t);
+
+	return	temp_in;
 
 ########
 # cv
@@ -180,6 +213,26 @@ def fill_img(img):
 	filled	= cv.bitwise_or(tmp, inv);
 	return	filled;
 
+def dilate(img, i):
+	dil	= cv.dilate(img, None, iterations=i,
+				borderType=cv.BORDER_CONSTANT, borderValue=0);
+	return	dil;
+
+def erode(img, i):
+	ero	= cv.erode(img, None, iterations=i,
+				borderType=cv.BORDER_CONSTANT, borderValue=0);
+	return	ero;
+
+def dilate_erode(img, i):
+	dil	= dilate(img, i);
+	out	= erode(dil, i);
+	return	out;
+
+def erode_dilate(img, i):
+	ero	= erode(img, i);
+	out	= dilate(ero, i);
+	return	out;
+
 ########
 # helpers
 
@@ -224,13 +277,9 @@ def cmp_template(t, img):
 	dbg_show(3, "img", and_);
 	nand	= cv.bitwise_not(and_);
 	dbg_show(3, "img", nand);
-	nande	= cv.erode(nand, None, iterations=2,
-						borderType=cv.BORDER_CONSTANT,
-						borderValue=0);
+	nande	= erode(nand, 2);
 	dbg_show(3, "img", nande);
-	diffd	= cv.dilate(diff, None, iterations=2,
-						borderType=cv.BORDER_CONSTANT,
-						borderValue=0);
+	diffd	= dilate(diff, 2);
 	dbg_show(3, "img", diffd);
 	diffmsk	= cv.bitwise_and(diffd, nande);
 	dbg_show(2, "img", diffmsk);
@@ -288,6 +337,29 @@ def sym_out_code(sym):
 		return	"delicate";
 	return	"";
 
+def norm_inner(sym):
+	border	= cv.copyMakeBorder(sym, top=20, bottom=20, left=20, right=20,
+			borderType=cv.BORDER_CONSTANT, value=(255, 255, 255));
+	dbg_show(3, "img", border);
+
+def match_t_inner(sym, temps):
+	match	= 0;
+	code	= 0;
+	thr	= 0.4;
+	for i in temps:
+		t		= temps[i];
+		s_filled	= fill_img(sym);
+		
+		t_filled	= fill_img(t);
+		m		= cmp_template(t_filled, s_filled);
+		if m > match:
+			code	= i;
+			match	= m;
+	if match < thr:
+		code	= "error";
+	dbg_printf(2, "%s (match: %.3lf)\n", code, match);
+	return	code;
+
 ########
 # process
 
@@ -300,13 +372,7 @@ def find_label(img):
 	dbg_show(2, "img", blur);
 	_, thr	= cv.threshold(blur, 30, 255, cv.THRESH_BINARY_INV);
 	dbg_show(2, "img", thr);
-	tmp	= cv.erode(thr, None, iterations=80,
-					borderType=cv.BORDER_CONSTANT,
-					borderValue=0);
-	dbg_show(2, "img", tmp);
-	tmp	= cv.dilate(tmp, None, iterations=80,
-					borderType=cv.BORDER_CONSTANT,
-					borderValue=0);
+	tmp	= erode_dilate(thr, 80);
 	dbg_show(1, "img", tmp);
 	cnts,_ = cv.findContours(tmp, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 	cnt	= cnts[0];
@@ -335,21 +401,9 @@ def find_symbols_loc(img):
 	dbg_show(2, "img", thr);
 	filled	= fill_img(thr);
 	dbg_show(2, "img", filled);
-	tmp	= cv.dilate(filled, None, iterations=2,
-					borderType=cv.BORDER_CONSTANT,
-					borderValue=0);
+	tmp	= dilate_erode(filled, 2);
 	dbg_show(2, "img", tmp);
-	tmp	= cv.erode(tmp, None, iterations=2,
-					borderType=cv.BORDER_CONSTANT,
-					borderValue=0);
-	dbg_show(2, "img", tmp);
-	tmp	= cv.erode(tmp, None, iterations=10,
-					borderType=cv.BORDER_CONSTANT,
-					borderValue=0);
-	dbg_show(2, "img", tmp);
-	syms	= cv.dilate(tmp, None, iterations=10,
-					borderType=cv.BORDER_CONSTANT,
-					borderValue=0);
+	syms	= erode_dilate(tmp, 10);
 	dbg_show(1, "img", syms);
 	return	syms;
 
@@ -389,9 +443,7 @@ def clean_symbols(syms):
 	for sym in syms:
 		inv	= cv.bitwise_not(sym);
 		dbg_show(2, "img", inv);
-		tmp	= cv.dilate(inv, None, iterations=3,
-						borderType=cv.BORDER_CONSTANT,
-						borderValue=0);
+		tmp	= dilate(inv, 3);
 		dbg_show(2, "img", tmp);
 		cnts, _	= cv.findContours(tmp, cv.RETR_EXTERNAL,
 							cv.CHAIN_APPROX_SIMPLE);
@@ -452,8 +504,10 @@ def main():
 
 	img		= img_get();
 	templates	= get_templates();
+	templates_in	= get_templates_inner();
 
 	dbg_show_templates(2, "img", templates);
+	dbg_show_templates(2, "img", templates_in);
 
 	dbg_show(1, "img", img);
 
