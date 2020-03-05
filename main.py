@@ -350,7 +350,6 @@ def norm_inner(sym):
 
 	return	roi;
 
-
 def match_t_inner(sym, temps):
 	match	= 0;
 	code	= 0;
@@ -369,6 +368,41 @@ def match_t_inner(sym, temps):
 		code	= "error";
 	dbg_printf(2, "%s (match: %.3lf)\n", code, match);
 	return	code;
+
+def decode_inner(code_main, code_in):
+	if (code_main == "bleach"):
+		return	None;
+	if (code_main == "dry_clean"):
+		if (code_in == "A"):
+			return	"any_solvent";
+		if (code_in == "F"):
+			return	"petroleum_only";
+		if (code_in == "W"):
+			return	"wet_clean";
+		if (code_in == "P"):
+			return	"any_solvent_except_TCE";
+	if (code_main == "iron") or (code_main == "tumble_dry"):
+		if (code_in == "1_dot"):
+			return	"low_temp";
+		if (code_in == "2_dot"):
+			return	"medium_temp";
+		if (code_in == "3_dot"):
+			return	"high_temp";
+	if (code_main == "machine_wash"):
+		if (code_in == "30") or (code_in == "1_dot"):
+			return	"30";
+		if (code_in == "40") or (code_in == "2_dot"):
+			return	"40";
+		if (code_in == "50") or (code_in == "3_dot"):
+			return	"50";
+		if (code_in == "60") or (code_in == "4_dot"):
+			return	"60";
+		if (code_in == "70") or (code_in == "5_dot"):
+			return	"70";
+		if (code_in == "95") or (code_in == "6_dot"):
+			return	"95";
+	return	None;
+		
 
 ########
 # process
@@ -475,7 +509,8 @@ def find_details(img, code, temps):
 			dbg_printf(1, "%s;", code);
 			sym_i	= sym_inside(img);		dbg_show(1, "img", sym_i);
 			dbg_printf(2, "\n");
-			code_i	= match_t_inner(sym_i, temps);
+			code_i_	= match_t_inner(sym_i, temps);
+			code_i	= decode_inner(code, code_i_);
 			full_code += "; " + code_i;		dbg_printf(1, " %s;", code_i);
 			sym_o	= sym_outside(img);		dbg_show(1, "img", sym_o);
 			code_o	= sym_out_code(sym_o);
