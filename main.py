@@ -29,7 +29,9 @@ import libalx.printf	as alx
 ################################################################################
 #	DBG								       #
 ################################################################################
-DBG	= 3;
+# 0: Only solution;  >=1 debugging info
+
+DBG	= 1;
 
 def dbg_printf(dbg, fmt, *args):
 	if (dbg > DBG):
@@ -61,7 +63,7 @@ class Img_Source(Enum):
 #	global variables						       #
 ################################################################################
 img_source	= Img_Source.FILE;
-img_src_fname	= "samples/0.jpeg";
+img_src_fname	= "samples/2.jpeg";
 
 templates_ext	= ".png";
 templates_dir	= "templates/";
@@ -241,6 +243,42 @@ def cmp_template(t, img):
 	dbg_printf(2, "match: %.3lf\n", match);
 	return	match;
 
+def sym_inside(sym):
+	dbg_show(3, "img", sym);
+	filld	= sym.copy();
+	cv.floodFill(filld, None, (0, 0), 0);
+	dbg_show(3, "img", filld);
+	cnts, _	= cv.findContours(filld, cv.RETR_EXTERNAL,
+						cv.CHAIN_APPROX_SIMPLE);
+	cnt_i	= largest_cnt(cnts);
+	mask	= np.zeros(sym.shape, np.uint8);
+	dbg_show(3, "img", mask);
+	cv.drawContours(mask, cnts, cnt_i, 255, -1);
+	dbg_show(3, "img", mask);
+	invsym	= cv.bitwise_not(sym);
+	dbg_show(3, "img", invsym);
+	inv	= cv.bitwise_and(invsym, mask);
+	dbg_show(3, "img", inv);
+	inside	= cv.bitwise_not(inv);
+	dbg_show(2, "img", inside);
+	return	inside;
+
+def sym_outside(sym):
+	dbg_show(3, "img", sym);
+	filled	= fill_img(sym);
+	dbg_show(3, "img", filled);
+	cnts, _	= cv.findContours(filled, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+	i	= largest_cnt(cnts);
+	nmsk	= np.zeros(sym.shape, np.uint8);
+	dbg_show(3, "img", nmsk);
+	cv.drawContours(nmsk, cnts, i, 255, -1);
+	dbg_show(3, "img", nmsk);
+	msk	= cv.bitwise_not(nmsk);
+	dbg_show(3, "img", msk);
+	sym_out	= cv.bitwise_and(filled, msk);
+	dbg_show(2, "img", sym_out);
+	return	sym_out;
+
 ########
 # process
 
@@ -380,14 +418,23 @@ def match_templates(img, temps):
 	dbg_printf(2, "%s (match: %.3lf)\n", code, match);
 	return	code;
 
+def find_details(img, code):
+	for c in templates_names:
+		dbg_printf(2, "%s =? %s\n", c, code);
+		if c == code:
+			sym_i	= sym_inside(img);
+			dbg_show(1, "img", sym_i);
+			sym_o	= sym_outside(img);
+			dbg_show(1, "img", sym_o);
+
 
 ################################################################################
 #	main								       #
 ################################################################################
 def main():
 
-	dbg_printf(0, "Hello, world!\n");
-	dbg_printf(0, "We have %i days to finish this\n", 2);
+	dbg_printf(1, "Hello, world!\n");
+	dbg_printf(1, "We have %i days to finish this\n", 2);
 	if (DBG):
 		cv.namedWindow("img");
 
@@ -407,14 +454,16 @@ def main():
 	syms	= clean_symbols(syms);
 	codes	= list();
 	for sym in syms:
+		dbg_show(0, "img", sym);
 		code	= match_templates(sym, templates);
 		codes.append(code);
-		alx.printf("%s\n", code);
+		dbg_printf(0, "%s\n", code);
+		find_details(sym, code);
 
 	cv.destroyAllWindows();
 
-	dbg_printf(0, "F*** you %i and %i times python.  This is a C printf :)\n", 3000, 1);
-	dbg_printf(0, "I'm just playing python; you know I love you.\n");
+	dbg_printf(1, "F*** you %i and %i times python.  This is a C printf :)\n", 3000, 1);
+	dbg_printf(1, "I'm just playing python; you know I love you.\n");
 
 	return	1; # python always does fail, so return 1 ;)
 
