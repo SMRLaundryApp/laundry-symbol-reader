@@ -129,7 +129,7 @@ def wait_for_ESC():
 def get_template(name):
 	fname	= templates_dir + name + templates_ext;
 	tmp	= cv.imread(fname, cv.IMREAD_GRAYSCALE);
-	_, t	= cv.threshold(tmp, 127, 255, cv.THRESH_BINARY);
+	t	= threshold(tmp, 127, cv.THRESH_BINARY);
 	dbg_printf(2, "Loaded template: %s\n", fname);
 	return	t;
 
@@ -146,7 +146,7 @@ def get_templates():
 def get_t_inner(name):
 	fname	= t_inner_dir + name + templates_ext;
 	tmp	= cv.imread(fname, cv.IMREAD_GRAYSCALE);
-	_, t	= cv.threshold(tmp, 127, 255, cv.THRESH_BINARY);
+	t	= threshold(tmp, 127, cv.THRESH_BINARY);
 	dbg_printf(2, "Loaded template: %s\n", fname);
 	return	t;
 
@@ -160,6 +160,10 @@ def get_templates_inner():
 
 ########
 # cv
+
+def threshold(img, val, thr_type):
+	_, thr	= cv.threshold(img, val, 255, thr_type);
+	return	thr;
 
 def img_rotate(img, x, y, angle):
 	map_mat	= cv.getRotationMatrix2D((y, x), angle, 1);
@@ -246,8 +250,7 @@ def erode_dilate(img, i):
 # helpers
 
 def crop_clean_symbol(sym):
-	border	= add_border(sym, 60, 0);
-	dbg_show(3, "img", border);
+	border	= add_border(sym, 60, 0);			dbg_show(3, "img", border);
 	cnts	= contours(border);
 	i	= largest_cnt(cnts);
 	loc	= cv.minAreaRect(cnts[i]);
@@ -261,35 +264,25 @@ def crop_clean_symbol(sym):
 	else:
 		symloc[1][1] = symloc[1][0];
 	symloc[2] = 0;
-	roi	= img_roi_2rrect(border, symloc);
-	dbg_show(2, "img", roi);
+	roi	= img_roi_2rrect(border, symloc);		dbg_show(2, "img", roi);
 	return	roi;
 
 def crop_base_symbol(sym):
 	cnts	= contours(sym);
 	cnt_i	= largest_cnt(cnts);
-	mask	= np.zeros(sym.shape, np.uint8);
-	dbg_show(3, "img", mask);
-	cv.drawContours(mask, cnts, cnt_i, 255, -1);
-	dbg_show(3, "img", mask);
-	sym_base	= cv.bitwise_and(sym, mask);
-	dbg_show(2, "img", sym_base);
+	mask	= np.zeros(sym.shape, np.uint8);		dbg_show(3, "img", mask);
+	cv.drawContours(mask, cnts, cnt_i, 255, -1);		dbg_show(3, "img", mask);
+	sym_base	= cv.bitwise_and(sym, mask);		dbg_show(2, "img", sym_base);
 	return	sym_base;
 
 def cmp_template(t, img):
 	img_n	= cv.resize(img, t.shape[::-1]);
-	diff	= cv.bitwise_xor(t, img_n);
-	dbg_show(3, "img", diff);
-	and_	= cv.bitwise_and(t, img_n);
-	dbg_show(3, "img", and_);
-	nand	= cv.bitwise_not(and_);
-	dbg_show(3, "img", nand);
-	nande	= erode(nand, 2);
-	dbg_show(3, "img", nande);
-	diffd	= dilate(diff, 2);
-	dbg_show(3, "img", diffd);
-	diffmsk	= cv.bitwise_and(diffd, nande);
-	dbg_show(2, "img", diffmsk);
+	diff	= cv.bitwise_xor(t, img_n);			dbg_show(3, "img", diff);
+	and_	= cv.bitwise_and(t, img_n);			dbg_show(3, "img", and_);
+	nand	= cv.bitwise_not(and_);				dbg_show(3, "img", nand);
+	nande	= erode(nand, 2);				dbg_show(3, "img", nande);
+	diffd	= dilate(diff, 2);				dbg_show(3, "img", diffd);
+	diffmsk	= cv.bitwise_and(diffd, nande);			dbg_show(2, "img", diffmsk);
 	pix_and	= cv.countNonZero(and_);
 	pix_dif	= cv.countNonZero(diffmsk);
 	dbg_printf(3, "and: %i, dif: %i\t", pix_and, pix_dif);
@@ -302,36 +295,25 @@ def cmp_template(t, img):
 def sym_inside(sym):
 	dbg_show(3, "img", sym);
 	filld	= sym.copy();
-	cv.floodFill(filld, None, (0, 0), 0);
-	dbg_show(3, "img", filld);
+	cv.floodFill(filld, None, (0, 0), 0);			dbg_show(3, "img", filld);
 	cnts	= contours(filld);
 	cnt_i	= largest_cnt(cnts);
-	mask	= np.zeros(sym.shape, np.uint8);
-	dbg_show(3, "img", mask);
-	cv.drawContours(mask, cnts, cnt_i, 255, -1);
-	dbg_show(3, "img", mask);
-	invsym	= cv.bitwise_not(sym);
-	dbg_show(3, "img", invsym);
-	inv	= cv.bitwise_and(invsym, mask);
-	dbg_show(3, "img", inv);
-	inside	= cv.bitwise_not(inv);
-	dbg_show(2, "img", inside);
+	mask	= np.zeros(sym.shape, np.uint8);		dbg_show(3, "img", mask);
+	cv.drawContours(mask, cnts, cnt_i, 255, -1);		dbg_show(3, "img", mask);
+	invsym	= cv.bitwise_not(sym);				dbg_show(3, "img", invsym);
+	inv	= cv.bitwise_and(invsym, mask);			dbg_show(3, "img", inv);
+	inside	= cv.bitwise_not(inv);				dbg_show(2, "img", inside);
 	return	inside;
 
 def sym_outside(sym):
 	dbg_show(3, "img", sym);
-	filled	= fill_img(sym);
-	dbg_show(3, "img", filled);
+	filled	= fill_img(sym);				dbg_show(3, "img", filled);
 	cnts	= contours(filled);
 	i	= largest_cnt(cnts);
-	nmsk	= np.zeros(sym.shape, np.uint8);
-	dbg_show(3, "img", nmsk);
-	cv.drawContours(nmsk, cnts, i, 255, -1);
-	dbg_show(3, "img", nmsk);
-	msk	= cv.bitwise_not(nmsk);
-	dbg_show(3, "img", msk);
-	sym_out	= cv.bitwise_and(filled, msk);
-	dbg_show(2, "img", sym_out);
+	nmsk	= np.zeros(sym.shape, np.uint8);		dbg_show(3, "img", nmsk);
+	cv.drawContours(nmsk, cnts, i, 255, -1);		dbg_show(3, "img", nmsk);
+	msk	= cv.bitwise_not(nmsk);				dbg_show(3, "img", msk);
+	sym_out	= cv.bitwise_and(filled, msk);			dbg_show(2, "img", sym_out);
 	return	sym_out;
 
 def sym_out_code(sym):
@@ -344,8 +326,7 @@ def sym_out_code(sym):
 	return	"";
 
 def norm_inner(sym):
-	border	= add_border(sym, 20, (255, 255, 255));
-	dbg_show(3, "img", border);
+	border	= add_border(sym, 20, (255, 255, 255));		dbg_show(3, "img", border);
 
 def match_t_inner(sym, temps):
 	match	= 0;
@@ -369,46 +350,32 @@ def match_t_inner(sym, temps):
 # process
 
 def find_label(img):
-	hsv	= cv.cvtColor(img, cv.COLOR_BGR2HSV);
-	dbg_show(2, "img", hsv);
-	s	= hsv[:,:,1];
-	dbg_show(2, "img", s);
-	blur	= cv.medianBlur(s, 71);
-	dbg_show(2, "img", blur);
-	_, thr	= cv.threshold(blur, 30, 255, cv.THRESH_BINARY_INV);
-	dbg_show(2, "img", thr);
-	tmp	= erode_dilate(thr, 80);
-	dbg_show(1, "img", tmp);
+	hsv	= cv.cvtColor(img, cv.COLOR_BGR2HSV);		dbg_show(2, "img", hsv);
+	s	= hsv[:,:,1];					dbg_show(2, "img", s);
+	blur	= cv.medianBlur(s, 71);				dbg_show(2, "img", blur);
+	thr	= threshold(blur, 30, cv.THRESH_BINARY_INV);	dbg_show(2, "img", thr);
+	tmp	= erode_dilate(thr, 80);			dbg_show(1, "img", tmp);
 	cnts	= contours(tmp);
 	cnt	= cnts[0];
 	rotrect	= cv.minAreaRect(cnt);
 	return	rotrect;
 
 def align_label(img, rotrect):
-	align	= img_rotate_2rect(img, rotrect);
-	dbg_show(1, "img", align);
+	align	= img_rotate_2rect(img, rotrect);		dbg_show(1, "img", align);
 	return	align;
 
 def crop_label(img, rotrect):
-	roi	= img_roi_2rrect(img, rotrect);
-	dbg_show(2, "img", roi);
-	border	= add_border(roi, 50, (255, 255, 255));
-	dbg_show(1, "img", border);
+	roi	= img_roi_2rrect(img, rotrect);			dbg_show(2, "img", roi);
+	border	= add_border(roi, 50, (255, 255, 255));		dbg_show(1, "img", border);
 	return	border;
 
 def find_symbols_loc(img):
-	gray	= cv.cvtColor(img, cv.COLOR_BGR2GRAY);
-	dbg_show(2, "img", gray);
-	blur	= cv.medianBlur(gray, 3);
-	dbg_show(2, "img", blur);
-	_, thr	= cv.threshold(blur, 50, 255, cv.THRESH_BINARY);
-	dbg_show(2, "img", thr);
-	filled	= fill_img(thr);
-	dbg_show(2, "img", filled);
-	tmp	= dilate_erode(filled, 2);
-	dbg_show(2, "img", tmp);
-	syms	= erode_dilate(tmp, 10);
-	dbg_show(1, "img", syms);
+	gray	= cv.cvtColor(img, cv.COLOR_BGR2GRAY);		dbg_show(2, "img", gray);
+	blur	= cv.medianBlur(gray, 3);			dbg_show(2, "img", blur);
+	thr	= threshold(blur, 50, cv.THRESH_BINARY);	dbg_show(2, "img", thr);
+	filled	= fill_img(thr);				dbg_show(2, "img", filled);
+	tmp	= dilate_erode(filled, 2);			dbg_show(2, "img", tmp);
+	syms	= erode_dilate(tmp, 10);			dbg_show(1, "img", syms);
 	return	syms;
 
 def find_symbols(img):
@@ -437,7 +404,7 @@ def crop_symbols(img, symlocs):
 		dbg_show(2, "img", roi);
 		gray	= cv.cvtColor(roi, cv.COLOR_BGR2GRAY);
 		dbg_show(2, "img", gray);
-		_, thr	= cv.threshold(gray, 64, 255, cv.THRESH_BINARY);
+		thr	= threshold(gray, 64, cv.THRESH_BINARY);
 		dbg_show(1, "img", thr);
 		syms.append(thr);
 	return	syms;
@@ -445,20 +412,14 @@ def crop_symbols(img, symlocs):
 def clean_symbols(syms):
 	syms_clean	= list();
 	for sym in syms:
-		inv	= cv.bitwise_not(sym);
-		dbg_show(2, "img", inv);
-		tmp	= dilate(inv, 3);
-		dbg_show(2, "img", tmp);
+		inv	= cv.bitwise_not(sym);			dbg_show(2, "img", inv);
+		tmp	= dilate(inv, 3);			dbg_show(2, "img", tmp);
 		cnts	= contours(tmp);
 		cnt_i	= largest_cnt(cnts);
-		mask	= np.zeros(tmp.shape, np.uint8);
-		dbg_show(2, "img", mask);
-		cv.drawContours(mask, cnts, cnt_i, 255, -1);
-		dbg_show(2, "img", mask);
-		nsym_clean	= cv.bitwise_and(inv, mask);
-		dbg_show(2, "img", nsym_clean);
-		sym_clean	= cv.bitwise_not(nsym_clean);
-		dbg_show(1, "img", sym_clean);
+		mask	= np.zeros(tmp.shape, np.uint8);	dbg_show(2, "img", mask);
+		cv.drawContours(mask, cnts, cnt_i, 255, -1);	dbg_show(2, "img", mask);
+		nsym_clean	= cv.bitwise_and(inv, mask);	dbg_show(2, "img", nsym_clean);
+		sym_clean	= cv.bitwise_not(nsym_clean);	dbg_show(1, "img", sym_clean);
 		syms_clean.append(sym_clean);
 	return	syms_clean;
 
@@ -487,10 +448,8 @@ def find_details(img, code):
 		dbg_printf(2, "%s =? %s\n", c, code);
 		if c == code:
 			dbg_printf(1, "%s;", code);
-			sym_i	= sym_inside(img);
-			dbg_show(1, "img", sym_i);
-			sym_o	= sym_outside(img);
-			dbg_show(1, "img", sym_o);
+			sym_i	= sym_inside(img);		dbg_show(1, "img", sym_i);
+			sym_o	= sym_outside(img);		dbg_show(1, "img", sym_o);
 			code_o	= sym_out_code(sym_o);
 			dbg_printf(1, " %s\n", code_o);
 
