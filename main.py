@@ -602,7 +602,7 @@ def get_washing_instruction_id(instruction):
 def main():
 
 	dbg_printf(1, "Hello, world!\n");
-	dbg_printf(1, "We have %i days to finish this\n", 1);
+	dbg_printf(1, "We have %i days to finish this\n", 0);
 	if (DBG):
 		cv.namedWindow("img");
 
