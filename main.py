@@ -20,10 +20,10 @@
 import time
 from enum	import Enum
 import argparse
+
 import cv2	as cv
 import numpy	as np
 from nose import case
-from sympy.strategies.core import switch
 
 import libalx.printf	as alx
 
