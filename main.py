@@ -590,10 +590,16 @@ def get_washing_instruction_id(instruction):
 	}
 	return switcher.get(instruction, -1)
 
-
-
-
-
+def print_format_output(codes):
+	alx.printf("{\n");
+	alx.printf("\"success\":true,\n");
+	alx.printf("\"message\":\n");
+	alx.printf("\"\n");
+	for code in codes:
+		alx.printf("%s\n", code);
+	alx.printf("\"\n");
+	alx.printf("}\n");
+	return	None;
 
 
 ################################################################################
@@ -630,14 +636,7 @@ def main():
 		array.append(get_washing_instruction_id(code));
 #		alx.printf("%s\n", code);
 
-	alx.printf("{\n");
-	alx.printf("\"success\":true,\n");
-	alx.printf("\"message\":\n");
-	alx.printf("\"\n");
-	for code in codes:
-		alx.printf("%s\n", code);
-	alx.printf("\"\n");
-	alx.printf("}\n");
+	print_format_output(codes);
 
 #	print(array);
 
