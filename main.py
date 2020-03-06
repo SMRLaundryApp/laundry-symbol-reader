@@ -628,9 +628,18 @@ def main():
 	array = []
 	for code in codes:
 		array.append(get_washing_instruction_id(code));
-		alx.printf("%s\n", code);
+#		alx.printf("%s\n", code);
 
-	print(array);
+	alx.printf("{\n");
+	alx.printf("\"success\":true,\n");
+	alx.printf("\"message\":\n");
+	alx.printf("\"\n");
+	for code in codes:
+		alx.printf("%s\n", code);
+	alx.printf("\"\n");
+	alx.printf("}\n");
+
+#	print(array);
 
 
 	cv.destroyAllWindows();
