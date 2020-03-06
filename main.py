@@ -19,7 +19,7 @@
 ################################################################################
 import time
 from enum	import Enum
-
+import argparse
 import cv2	as cv
 import numpy	as np
 
@@ -63,7 +63,14 @@ class Img_Source(Enum):
 #	global variables						       #
 ################################################################################
 img_source	= Img_Source.FILE;
-img_src_fname	= "samples/2.jpeg";
+
+# construct the argument parse and parse the arguments
+ap = argparse.ArgumentParser()
+ap.add_argument("-i", "--image", help="path to the image file")
+args = vars(ap.parse_args())
+
+# file location from command
+img_src_fname	= args["image"]
 
 templates_ext	= ".png";
 templates_dir	= "templates/";
