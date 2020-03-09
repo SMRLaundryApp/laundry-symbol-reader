@@ -27,10 +27,11 @@
 #include <libalx/extra/cv/core/roi.h>
 #include <libalx/extra/cv/highgui/file.h>
 #include <libalx/extra/cv/highgui/window.h>
-#include <libalx/extra/cv/imgproc/filter.h>
-#include <libalx/extra/cv/imgproc/geometric.h>
-#include <libalx/extra/cv/imgproc/miscellaneous.h>
-#include <libalx/extra/cv/imgproc/shape.h>
+#include <libalx/extra/cv/imgproc/filter/filter.h>
+#include <libalx/extra/cv/imgproc/geometric/geom.h>
+#include <libalx/extra/cv/imgproc/miscellaneous/misc.h>
+#include <libalx/extra/cv/imgproc/shape/contours.h>
+#include <libalx/extra/cv/imgproc/shape/rect.h>
 #include <libalx/extra/cv/types.h>
 
 
@@ -91,6 +92,8 @@ static
 int	isolate_symbols	(img_s *restrict img,
 			 img_s *syms[static restrict MAX_SYMBOLS],
 			 ptrdiff_t *restrict n);
+static
+int	clean_symbol	(img_s *sym);
 
 
 /******************************************************************************
@@ -170,14 +173,23 @@ int	proc	(const char *fname)
 		return	-1;
 	time_0 = clock();
 
+	status--;
 	if (alx_cv_imread(img, fname))
 		goto err;
+	status--;
 	if (find_label(img))
 		goto err;
+	status--;
 	if (find_symbols(img))
 		goto err;
+	status--;
 	if (isolate_symbols(img, syms, &nsyms))
 		goto err;
+	status--;
+	for (ptrdiff_t i = 0; i < nsyms; i++) {
+		if (clean_symbol(syms[i]))
+			goto err;
+	}
 
 	time_1 = clock();
 	time_tot = ((double) time_1 - time_0) / CLOCKS_PER_SEC;
@@ -340,8 +352,6 @@ int	isolate_symbols	(img_s *restrict img,
 	if (alx_cv_alloc_rect(&rect))
 		goto err2;
 
-	(void)syms;
-
 	/* Find symbols */
 	status--;
 	b	= 100;
@@ -377,13 +387,56 @@ int	isolate_symbols	(img_s *restrict img,
 		y -= h / 2;
 		if (alx_cv_init_rect(rect, x, y, w, h))
 			goto err;
-		alx_cv_roi_set(syms[i], rect);   	dbg_update_win(); dbg_show(1, syms[i], NULL);
+		alx_cv_roi_set(syms[i], rect);   dbg_update_win(); dbg_show(1, syms[i], NULL);
 	}
 
 	/* deinit */
 	status	= 0;
 err:	alx_cv_free_rect(rect);
 err2:	alx_cv_deinit_conts(conts);
+	alx_cv_free_conts(conts);
+err1:	alx_cv_deinit_img(tmp);
+err0:	alx_cv_free_img(tmp);
+	return	status;
+}
+
+static
+int	clean_symbol	(img_s *img)
+{
+	img_s		*tmp;
+	conts_s		*conts;
+	ptrdiff_t	w, h;
+	ptrdiff_t	i;
+	int		status;
+
+	/* init */
+	status	= -1;
+	if (alx_cv_alloc_img(&tmp))
+		return	status;
+	if (alx_cv_init_img(tmp, 1, 1))
+		goto err0;
+	if (alx_cv_alloc_conts(&conts))
+		goto err1;
+	alx_cv_init_conts(conts);
+
+	/* Find symbols */
+	status--;
+	alx_cv_clone(tmp, img);					dbg_show(2, tmp, NULL);
+	alx_cv_border(img, 1);			dbg_update_win(); dbg_show(3, img, NULL);
+	alx_cv_smooth(tmp, ALX_CV_SMOOTH_MEDIAN, 3);		dbg_show(3, tmp, NULL);
+	alx_cv_black_mask(tmp, -1, 100, -1);			dbg_show(3, tmp, NULL);
+	alx_cv_dilate(tmp, 2);					dbg_show(3, tmp, NULL);
+	alx_cv_border(tmp, 1);			dbg_update_win(); dbg_show(3, tmp, NULL);
+	alx_cv_holes_fill(tmp);					dbg_show(3, tmp, NULL);
+	alx_cv_contours(tmp, conts);				dbg_show(2, tmp, NULL);
+	alx_cv_extract_imgdata(tmp, NULL, &w, &h, NULL, NULL, NULL);
+	if (alx_cv_conts_closest(NULL, &i, conts, w / 2, h / 2, NULL))
+		goto err;
+	alx_cv_contour_mask(tmp, conts, i);			dbg_show(2, tmp, NULL);
+
+	/* deinit */
+	status	= 0;
+err:	alx_cv_deinit_conts(conts);
 	alx_cv_free_conts(conts);
 err1:	alx_cv_deinit_img(tmp);
 err0:	alx_cv_free_img(tmp);
