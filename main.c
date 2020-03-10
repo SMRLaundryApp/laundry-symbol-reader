@@ -43,7 +43,7 @@
 /******************************************************************************
  ******* macro ****************************************************************
  ******************************************************************************/
-#define DBG	0
+#define DBG	03
 
 #ifdef DBG
 #define dbg_show(dbg, img, msg)		do				\
@@ -294,19 +294,17 @@ int	find_symbols	(img_s *img)
 	/* Clean BKGD */
 	status--;
 	alx_cv_clone(tmp, img);					dbg_show(2, tmp, NULL);
-	alx_cv_clone(clean, img);				dbg_show(3, tmp, NULL);
+	alx_cv_component(img, ALX_CV_CMP_BGR_R);		dbg_show(3, img, NULL);
+	alx_cv_smooth(img, ALX_CV_SMOOTH_MEDIAN, 3);		dbg_show(3, img, NULL);
+	alx_cv_clone(clean, img);				dbg_show(3, clean, NULL);
 	alx_cv_white_mask(tmp, -1, 32, 64);			dbg_show(3, tmp, NULL);
 	alx_cv_dilate_erode(tmp, 10);				dbg_show(3, tmp, NULL);
-	alx_cv_erode_dilate(tmp, 10);				dbg_show(3, tmp, NULL);
 	alx_cv_bkgd_mask(tmp);					dbg_show(3, tmp, NULL);
-	alx_cv_component(clean, ALX_CV_CMP_BGR_R);		dbg_show(3, clean, NULL);
 	alx_cv_or_2ref(clean, tmp);				dbg_show(2, clean, NULL);
 
 	/* Find syms */
 	alx_cv_clone(tmp, clean);				dbg_show(3, tmp, NULL);
-	alx_cv_smooth(tmp, ALX_CV_SMOOTH_MEDIAN, 3);		dbg_show(3, tmp, NULL);
-	alx_cv_threshold(tmp, ALX_CV_THRESH_BINARY_INV, 80);
-								dbg_show(3, tmp, NULL);
+	alx_cv_threshold(tmp, ALX_CV_THRESH_BINARY_INV, 80);	dbg_show(3, tmp, NULL);
 	alx_cv_dilate(tmp, 3);					dbg_show(3, tmp, NULL);
 	alx_cv_holes_fill(tmp);					dbg_show(3, tmp, NULL);
 	alx_cv_erode_dilate(tmp, 20);				dbg_show(3, tmp, NULL);
@@ -363,7 +361,7 @@ int	isolate_symbols	(img_s *restrict img,
 	b	= 100;
 	alx_cv_clone(tmp, img);					dbg_show(2, tmp, NULL);
 	alx_cv_border(img, b);			dbg_update_win(); dbg_show(3, img, NULL);
-	alx_cv_black_mask(tmp, -1, 90, -1);			dbg_show(3, tmp, NULL);
+	alx_cv_threshold(tmp, ALX_CV_THRESH_BINARY_INV, 100);	dbg_show(3, tmp, NULL);
 	alx_cv_dilate_erode(tmp, 8);				dbg_show(3, tmp, NULL);
 	alx_cv_holes_fill(tmp);					dbg_show(3, tmp, NULL);
 	alx_cv_erode_dilate(tmp, 12);				dbg_show(3, tmp, NULL);
@@ -393,7 +391,7 @@ int	isolate_symbols	(img_s *restrict img,
 		y -= h / 2;
 		if (alx_cv_init_rect(rect, x, y, w, h))
 			goto err;
-		alx_cv_roi_set(syms[i], rect);   dbg_update_win(); dbg_show(1, syms[i], NULL);
+		alx_cv_roi_set(syms[i], rect);	dbg_update_win(); dbg_show(1, syms[i], NULL);
 	}
 
 	/* deinit */
@@ -429,8 +427,6 @@ int	clean_symbol	(img_s *img)
 	status--;
 	alx_cv_clone(tmp, img);					dbg_show(2, tmp, NULL);
 	alx_cv_border(img, 1);			dbg_update_win(); dbg_show(3, img, NULL);
-	alx_cv_smooth(tmp, ALX_CV_SMOOTH_MEDIAN, 3);		dbg_show(3, tmp, NULL);
-	alx_cv_component(tmp, ALX_CV_CMP_BGR_R);		dbg_show(3, tmp, NULL);
 	alx_cv_threshold(tmp, ALX_CV_THRESH_BINARY_INV, ALX_CV_THR_OTSU);
 								dbg_show(3, tmp, NULL);
 	alx_cv_dilate(tmp, 2);					dbg_show(3, tmp, NULL);
