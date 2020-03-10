@@ -17,6 +17,7 @@
 #include <libalx/base/errno/error.h>
 #include <libalx/base/stdio/seekc.h>
 #include <libalx/base/stdlib/maximum.h>
+#include <libalx/base/stdlib/minimum.h>
 #include <libalx/base/stdlib/strto/strtoi_s.h>
 #include <libalx/extra/cv/alx/fill.h>
 #include <libalx/extra/cv/alx/gray.h>
@@ -45,7 +46,7 @@
 /******************************************************************************
  ******* macro ****************************************************************
  ******************************************************************************/
-#define DBG	0
+#define DBG	03
 
 #ifdef DBG
 #define dbg_show(dbg, img, msg)		do				\
@@ -217,7 +218,6 @@ int	find_label	(img_s *img)
 	const cont_s	*lbl;
 	rect_rot_s	*rect_rot;
 	rect_s		*rect;
-	ptrdiff_t	img_w, img_h;
 	ptrdiff_t	ctr_x, ctr_y, w, h, x, y, b;
 	int		status;
 
@@ -250,10 +250,8 @@ int	find_label	(img_s *img)
 	status--;
 	alx_cv_rotate_2rect(img, rect_rot);			dbg_show(3, img, NULL);
 	alx_cv_extract_rect_rot(rect_rot, &ctr_x, &ctr_y, &w, &h, NULL);
-	alx_cv_extract_imgdata(img, NULL, &img_w, &img_h, NULL, NULL, NULL);
-	b	= ALX_MAX(0, ALX_MAX(w - img_w + 1, h - img_h + 1));
-	if (b)
-		alx_cv_border(img, b);		dbg_update_win(); dbg_show(3, img, NULL);
+	b	= ALX_MAX(w / 2, h / 2);
+	alx_cv_border(img, b);		dbg_update_win(); dbg_show(3, img, NULL);
 	x	= ctr_x - w / 2 + b;
 	y	= ctr_y - h / 2 + b;
 	if (alx_cv_init_rect(rect, x, y, w, h))
@@ -274,10 +272,11 @@ err0:	alx_cv_free_img(tmp);
 static
 int	find_symbols	(img_s *img)
 {
-	img_s		*clean, *tmp;
+	img_s		*clean, *tmp, *bkgd;
 	conts_s		*conts;
 	const cont_s	*syms;
 	rect_s		*rect;
+	uint8_t		median, otsu, thr;
 	int		status;
 
 	/* init */
@@ -286,30 +285,46 @@ int	find_symbols	(img_s *img)
 		return	status;
 	if (alx_cv_init_img(clean, 1, 1))
 		goto err0;
-	if (alx_cv_alloc_img(&tmp))
+	if (alx_cv_alloc_img(&bkgd))
 		goto err1;
-	if (alx_cv_init_img(tmp, 1, 1))
+	if (alx_cv_init_img(bkgd, 1, 1))
 		goto err2;
-	if (alx_cv_alloc_conts(&conts))
+	if (alx_cv_alloc_img(&tmp))
 		goto err3;
+	if (alx_cv_init_img(tmp, 1, 1))
+		goto err4;
+	if (alx_cv_alloc_conts(&conts))
+		goto err5;
 	alx_cv_init_conts(conts);
 	if (alx_cv_alloc_rect(&rect))
-		goto err4;
+		goto err6;
 
 	/* Clean BKGD */
 	status--;
 	alx_cv_clone(tmp, img);					dbg_show(2, tmp, NULL);
 	alx_cv_component(img, ALX_CV_CMP_BGR_R);		dbg_show(3, img, NULL);
 	alx_cv_smooth(img, ALX_CV_SMOOTH_MEDIAN, 3);		dbg_show(3, img, NULL);
+	alx_cv_clone(bkgd, img);				dbg_show(2, bkgd, NULL);
 	alx_cv_clone(clean, img);				dbg_show(3, clean, NULL);
 	alx_cv_white_mask(tmp, -1, 32, 64);			dbg_show(3, tmp, NULL);
 	alx_cv_dilate_erode(tmp, 5);				dbg_show(3, tmp, NULL);
 	alx_cv_bkgd_mask(tmp);					dbg_show(3, tmp, NULL);
-	alx_cv_or_2ref(clean, tmp);				dbg_show(2, clean, NULL);
+	alx_cv_dilate(tmp, 10);					dbg_show(3, tmp, NULL);
+	median	= alx_cv_median(bkgd);				dbg_show(3, bkgd, NULL);
+	alx_cv_and_2ref(bkgd, tmp);				dbg_show(3, bkgd, NULL);
+	alx_cv_invert(tmp);					dbg_show(3, tmp, NULL);
+	alx_cv_and_2ref(clean, tmp);				dbg_show(3, clean, NULL);
+	alx_cv_or_2ref(clean, bkgd);				dbg_show(2, clean, NULL);
 
 	/* Find syms */
 	alx_cv_clone(tmp, clean);				dbg_show(3, tmp, NULL);
-	alx_cv_threshold(tmp, ALX_CV_THRESH_BINARY_INV, 80);	dbg_show(3, tmp, NULL);
+	otsu	= alx_cv_threshold(tmp, ALX_CV_THRESH_BINARY_INV, ALX_CV_THR_OTSU);
+								dbg_show(3, tmp, NULL);
+	alx_cv_clone(tmp, clean);				dbg_show(3, tmp, NULL);
+	thr	= ALX_MIN(median - 100, otsu);
+	thr	= ALX_MAX(100, thr);
+printf("%i %i -> %i\n", (int)median, (int)otsu, (int)thr);
+	alx_cv_threshold(tmp, ALX_CV_THRESH_BINARY_INV, thr);	dbg_show(3, tmp, NULL);
 	alx_cv_dilate(tmp, 3);					dbg_show(3, tmp, NULL);
 	alx_cv_holes_fill(tmp);					dbg_show(3, tmp, NULL);
 	alx_cv_erode_dilate(tmp, 20);				dbg_show(3, tmp, NULL);
@@ -327,10 +342,12 @@ int	find_symbols	(img_s *img)
 	/* deinit */
 	status	= 0;
 err:	alx_cv_free_rect(rect);
-err4:	alx_cv_deinit_conts(conts);
+err6:	alx_cv_deinit_conts(conts);
 	alx_cv_free_conts(conts);
-err3:	alx_cv_deinit_img(tmp);
-err2:	alx_cv_free_img(tmp);
+err5:	alx_cv_deinit_img(tmp);
+err4:	alx_cv_free_img(tmp);
+err3:	alx_cv_deinit_img(bkgd);
+err2:	alx_cv_free_img(bkgd);
 err1:	alx_cv_deinit_img(clean);
 err0:	alx_cv_free_img(clean);
 	return	status;
