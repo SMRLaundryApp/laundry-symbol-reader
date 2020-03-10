@@ -43,7 +43,7 @@
 /******************************************************************************
  ******* macro ****************************************************************
  ******************************************************************************/
-#define DBG	03
+#define DBG	0
 
 #ifdef DBG
 #define dbg_show(dbg, img, msg)		do				\
@@ -298,7 +298,7 @@ int	find_symbols	(img_s *img)
 	alx_cv_smooth(img, ALX_CV_SMOOTH_MEDIAN, 3);		dbg_show(3, img, NULL);
 	alx_cv_clone(clean, img);				dbg_show(3, clean, NULL);
 	alx_cv_white_mask(tmp, -1, 32, 64);			dbg_show(3, tmp, NULL);
-	alx_cv_dilate_erode(tmp, 10);				dbg_show(3, tmp, NULL);
+	alx_cv_dilate_erode(tmp, 5);				dbg_show(3, tmp, NULL);
 	alx_cv_bkgd_mask(tmp);					dbg_show(3, tmp, NULL);
 	alx_cv_or_2ref(clean, tmp);				dbg_show(2, clean, NULL);
 
@@ -308,8 +308,8 @@ int	find_symbols	(img_s *img)
 	alx_cv_dilate(tmp, 3);					dbg_show(3, tmp, NULL);
 	alx_cv_holes_fill(tmp);					dbg_show(3, tmp, NULL);
 	alx_cv_erode_dilate(tmp, 20);				dbg_show(3, tmp, NULL);
-	alx_cv_lines_horizontal(tmp);				dbg_show(3, tmp, NULL);
 	alx_cv_dilate(tmp, 50);					dbg_show(3, tmp, NULL);
+	alx_cv_lines_horizontal(tmp);				dbg_show(3, tmp, NULL);
 	alx_cv_erode(tmp, 5);					dbg_show(3, tmp, NULL);
 	alx_cv_contours(tmp, conts);				dbg_show(2, tmp, NULL);
 	if (alx_cv_conts_largest(&syms, NULL, conts))
