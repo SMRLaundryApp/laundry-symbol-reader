@@ -7,6 +7,7 @@
 /******************************************************************************
  ******* headers **************************************************************
  ******************************************************************************/
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -19,22 +20,24 @@
 #include <libalx/base/stdlib/maximum.h>
 #include <libalx/base/stdlib/minimum.h>
 #include <libalx/base/stdlib/strto/strtoi_s.h>
-#include <libalx/extra/cv/alx/fill.h>
 #include <libalx/extra/cv/alx/gray.h>
 #include <libalx/extra/cv/alx/lines.h>
-#include <libalx/extra/cv/core/array.h>
-#include <libalx/extra/cv/core/contours.h>
-#include <libalx/extra/cv/core/img.h>
-#include <libalx/extra/cv/core/rect.h>
-#include <libalx/extra/cv/core/roi.h>
+#include <libalx/extra/cv/alx/median.h>
+#include <libalx/extra/cv/core/array/bitwise.h>
+#include <libalx/extra/cv/core/array/component.h>
+#include <libalx/extra/cv/core/array/normalize.h>
+#include <libalx/extra/cv/core/contours/contours.h>
+#include <libalx/extra/cv/core/img/img.h>
+#include <libalx/extra/cv/core/rect/rect.h>
+#include <libalx/extra/cv/core/roi/roi.h>
 #include <libalx/extra/cv/highgui/file.h>
 #include <libalx/extra/cv/highgui/window.h>
-#include <libalx/extra/cv/alx/median.h>
+#include <libalx/extra/cv/imgproc/features/edges.h>
 #include <libalx/extra/cv/imgproc/filter/border.h>
 #include <libalx/extra/cv/imgproc/filter/dilate_erode.h>
 #include <libalx/extra/cv/imgproc/filter/edges.h>
 #include <libalx/extra/cv/imgproc/filter/smooth.h>
-#include <libalx/extra/cv/imgproc/geometric/geom.h>
+#include <libalx/extra/cv/imgproc/geometric/rotate.h>
 #include <libalx/extra/cv/imgproc/miscellaneous/color.h>
 #include <libalx/extra/cv/imgproc/miscellaneous/fill.h>
 #include <libalx/extra/cv/imgproc/miscellaneous/threshold.h>
@@ -276,7 +279,6 @@ int	find_symbols	(img_s *img)
 	conts_s		*conts;
 	const cont_s	*syms;
 	rect_s		*rect;
-	uint8_t		median, otsu, thr;
 	int		status;
 
 	/* init */
@@ -310,7 +312,7 @@ int	find_symbols	(img_s *img)
 	alx_cv_dilate_erode(tmp, 5);				dbg_show(3, tmp, NULL);
 	alx_cv_bkgd_mask(tmp);					dbg_show(3, tmp, NULL);
 	alx_cv_dilate(tmp, 10);					dbg_show(3, tmp, NULL);
-	median	= alx_cv_median(bkgd);				dbg_show(3, bkgd, NULL);
+	alx_cv_median(bkgd);					dbg_show(3, bkgd, NULL);
 	alx_cv_and_2ref(bkgd, tmp);				dbg_show(3, bkgd, NULL);
 	alx_cv_invert(tmp);					dbg_show(3, tmp, NULL);
 	alx_cv_and_2ref(clean, tmp);				dbg_show(3, clean, NULL);
@@ -318,22 +320,18 @@ int	find_symbols	(img_s *img)
 
 	/* Find syms */
 	alx_cv_clone(tmp, clean);				dbg_show(3, tmp, NULL);
-	otsu	= alx_cv_threshold(tmp, ALX_CV_THRESH_BINARY_INV, ALX_CV_THR_OTSU);
-								dbg_show(3, tmp, NULL);
-	alx_cv_clone(tmp, clean);				dbg_show(3, tmp, NULL);
-	thr	= ALX_MIN(median - 100, otsu);
-	thr	= ALX_MAX(100, thr);
-printf("%i %i -> %i\n", (int)median, (int)otsu, (int)thr);
-	alx_cv_threshold(tmp, ALX_CV_THRESH_BINARY_INV, thr);	dbg_show(3, tmp, NULL);
-	alx_cv_dilate(tmp, 3);					dbg_show(3, tmp, NULL);
+	alx_cv_normalize(tmp);					dbg_show(3, tmp, NULL);
+	alx_cv_smooth(tmp, ALX_CV_SMOOTH_MEDIAN, 5);		dbg_show(3, tmp, NULL);
+	alx_cv_canny(tmp, 200, 3, false);			dbg_show(3, tmp, NULL);
+	alx_cv_dilate(tmp, 1);					dbg_show(3, tmp, NULL);
 	alx_cv_holes_fill(tmp);					dbg_show(3, tmp, NULL);
 	alx_cv_erode_dilate(tmp, 20);				dbg_show(3, tmp, NULL);
-	alx_cv_dilate(tmp, 50);					dbg_show(3, tmp, NULL);
+	alx_cv_dilate(tmp, 40);					dbg_show(3, tmp, NULL);
 	alx_cv_lines_horizontal(tmp);				dbg_show(3, tmp, NULL);
 	alx_cv_erode(tmp, 5);					dbg_show(3, tmp, NULL);
 	alx_cv_contours(tmp, conts);				dbg_show(2, tmp, NULL);
 	if (alx_cv_conts_largest(&syms, NULL, conts))
-		goto err;
+		goto err; 
 	alx_cv_bounding_rect(rect, syms);
 
 	/* Crop to symbols */
@@ -383,8 +381,12 @@ int	isolate_symbols	(img_s *restrict img,
 	b	= 100;
 	alx_cv_clone(tmp, img);					dbg_show(2, tmp, NULL);
 	alx_cv_border(img, b);			dbg_update_win(); dbg_show(3, img, NULL);
-	alx_cv_threshold(tmp, ALX_CV_THRESH_BINARY_INV, 100);	dbg_show(3, tmp, NULL);
-	alx_cv_dilate_erode(tmp, 8);				dbg_show(3, tmp, NULL);
+	alx_cv_normalize(tmp);					dbg_show(3, tmp, NULL);
+	alx_cv_smooth(tmp, ALX_CV_SMOOTH_MEDIAN, 3);		dbg_show(3, tmp, NULL);
+	alx_cv_canny(tmp, 200, 3, false);			dbg_show(3, tmp, NULL);
+//	alx_cv_threshold(tmp, ALX_CV_THRESH_BINARY_INV, 80);	dbg_show(3, tmp, NULL);
+	alx_cv_dilate(tmp, 1);					dbg_show(3, tmp, NULL);
+//	alx_cv_dilate_erode(tmp, 8);				dbg_show(3, tmp, NULL);
 	alx_cv_holes_fill(tmp);					dbg_show(3, tmp, NULL);
 	alx_cv_erode_dilate(tmp, 12);				dbg_show(3, tmp, NULL);
 	alx_cv_border(tmp, b);			dbg_update_win(); dbg_show(3, tmp, NULL);
