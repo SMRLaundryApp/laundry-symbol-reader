@@ -27,9 +27,14 @@
 #include <libalx/extra/cv/core/roi.h>
 #include <libalx/extra/cv/highgui/file.h>
 #include <libalx/extra/cv/highgui/window.h>
-#include <libalx/extra/cv/imgproc/filter/filter.h>
+#include <libalx/extra/cv/imgproc/filter/border.h>
+#include <libalx/extra/cv/imgproc/filter/dilate_erode.h>
+#include <libalx/extra/cv/imgproc/filter/edges.h>
+#include <libalx/extra/cv/imgproc/filter/smooth.h>
 #include <libalx/extra/cv/imgproc/geometric/geom.h>
-#include <libalx/extra/cv/imgproc/miscellaneous/misc.h>
+#include <libalx/extra/cv/imgproc/miscellaneous/color.h>
+#include <libalx/extra/cv/imgproc/miscellaneous/fill.h>
+#include <libalx/extra/cv/imgproc/miscellaneous/threshold.h>
 #include <libalx/extra/cv/imgproc/shape/contours.h>
 #include <libalx/extra/cv/imgproc/shape/rect.h>
 #include <libalx/extra/cv/types.h>
@@ -424,7 +429,9 @@ int	clean_symbol	(img_s *img)
 	alx_cv_clone(tmp, img);					dbg_show(2, tmp, NULL);
 	alx_cv_border(img, 1);			dbg_update_win(); dbg_show(3, img, NULL);
 	alx_cv_smooth(tmp, ALX_CV_SMOOTH_MEDIAN, 3);		dbg_show(3, tmp, NULL);
-	alx_cv_black_mask(tmp, -1, 100, -1);			dbg_show(3, tmp, NULL);
+	alx_cv_component(tmp, ALX_CV_CMP_BGR_R);		dbg_show(3, tmp, NULL);
+	alx_cv_threshold(tmp, ALX_CV_THRESH_BINARY_INV, ALX_CV_THR_OTSU);
+								dbg_show(3, tmp, NULL);
 	alx_cv_dilate(tmp, 2);					dbg_show(3, tmp, NULL);
 	alx_cv_border(tmp, 1);			dbg_update_win(); dbg_show(3, tmp, NULL);
 	alx_cv_holes_fill(tmp);					dbg_show(3, tmp, NULL);
@@ -433,6 +440,7 @@ int	clean_symbol	(img_s *img)
 	if (alx_cv_conts_closest(NULL, &i, conts, w / 2, h / 2, NULL))
 		goto err;
 	alx_cv_contour_mask(tmp, conts, i);			dbg_show(2, tmp, NULL);
+	alx_cv_dilate(tmp, 2);					dbg_show(3, tmp, NULL);
 
 	/* deinit */
 	status	= 0;
