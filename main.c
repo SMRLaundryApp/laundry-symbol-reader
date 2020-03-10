@@ -16,6 +16,7 @@
 #define ALX_NO_PREFIX
 #include <libalx/base/errno/error.h>
 #include <libalx/base/stdio/seekc.h>
+#include <libalx/base/stdlib/maximum.h>
 #include <libalx/base/stdlib/strto/strtoi_s.h>
 #include <libalx/extra/cv/alx/fill.h>
 #include <libalx/extra/cv/alx/gray.h>
@@ -27,6 +28,7 @@
 #include <libalx/extra/cv/core/roi.h>
 #include <libalx/extra/cv/highgui/file.h>
 #include <libalx/extra/cv/highgui/window.h>
+#include <libalx/extra/cv/alx/median.h>
 #include <libalx/extra/cv/imgproc/filter/border.h>
 #include <libalx/extra/cv/imgproc/filter/dilate_erode.h>
 #include <libalx/extra/cv/imgproc/filter/edges.h>
@@ -215,6 +217,7 @@ int	find_label	(img_s *img)
 	const cont_s	*lbl;
 	rect_rot_s	*rect_rot;
 	rect_s		*rect;
+	ptrdiff_t	img_w, img_h;
 	ptrdiff_t	ctr_x, ctr_y, w, h, x, y, b;
 	int		status;
 
@@ -247,8 +250,10 @@ int	find_label	(img_s *img)
 	status--;
 	alx_cv_rotate_2rect(img, rect_rot);			dbg_show(3, img, NULL);
 	alx_cv_extract_rect_rot(rect_rot, &ctr_x, &ctr_y, &w, &h, NULL);
-	b	= w/2 + h/2;
-	alx_cv_border(img, b);			dbg_update_win(); dbg_show(3, img, NULL);
+	alx_cv_extract_imgdata(img, NULL, &img_w, &img_h, NULL, NULL, NULL);
+	b	= ALX_MAX(0, ALX_MAX(w - img_w + 1, h - img_h + 1));
+	if (b)
+		alx_cv_border(img, b);		dbg_update_win(); dbg_show(3, img, NULL);
 	x	= ctr_x - w / 2 + b;
 	y	= ctr_y - h / 2 + b;
 	if (alx_cv_init_rect(rect, x, y, w, h))
@@ -407,7 +412,7 @@ err0:	alx_cv_free_img(tmp);
 static
 int	clean_symbol	(img_s *img)
 {
-	img_s		*tmp;
+	img_s		*mask, *bkgd;
 	conts_s		*conts;
 	ptrdiff_t	w, h;
 	ptrdiff_t	i;
@@ -415,36 +420,54 @@ int	clean_symbol	(img_s *img)
 
 	/* init */
 	status	= -1;
-	if (alx_cv_alloc_img(&tmp))
+	if (alx_cv_alloc_img(&mask))
 		return	status;
-	if (alx_cv_init_img(tmp, 1, 1))
+	if (alx_cv_init_img(mask, 1, 1))
 		goto err0;
-	if (alx_cv_alloc_conts(&conts))
+	if (alx_cv_alloc_img(&bkgd))
 		goto err1;
+	if (alx_cv_init_img(bkgd, 1, 1))
+		goto err2;
+	if (alx_cv_alloc_conts(&conts))
+		goto err3;
 	alx_cv_init_conts(conts);
 
-	/* Find symbols */
+	/* Find symbol */
 	status--;
-	alx_cv_clone(tmp, img);					dbg_show(2, tmp, NULL);
-	alx_cv_border(img, 1);			dbg_update_win(); dbg_show(3, img, NULL);
-	alx_cv_threshold(tmp, ALX_CV_THRESH_BINARY_INV, ALX_CV_THR_OTSU);
-								dbg_show(3, tmp, NULL);
-	alx_cv_dilate(tmp, 2);					dbg_show(3, tmp, NULL);
-	alx_cv_border(tmp, 1);			dbg_update_win(); dbg_show(3, tmp, NULL);
-	alx_cv_holes_fill(tmp);					dbg_show(3, tmp, NULL);
-	alx_cv_contours(tmp, conts);				dbg_show(2, tmp, NULL);
-	alx_cv_extract_imgdata(tmp, NULL, &w, &h, NULL, NULL, NULL);
+	alx_cv_clone(mask, img);				dbg_show(2, mask, NULL);
+	alx_cv_threshold(mask, ALX_CV_THRESH_BINARY_INV, ALX_CV_THR_OTSU);
+								dbg_show(3, mask, NULL);
+	alx_cv_dilate(mask, 2);					dbg_show(3, mask, NULL);
+	alx_cv_border(mask, 1);			dbg_update_win(); dbg_show(3, mask, NULL);
+	alx_cv_holes_fill(mask);				dbg_show(3, mask, NULL);
+	alx_cv_contours(mask, conts);				dbg_show(2, mask, NULL);
+	alx_cv_extract_imgdata(mask, NULL, &w, &h, NULL, NULL, NULL);
 	if (alx_cv_conts_closest(NULL, &i, conts, w / 2, h / 2, NULL))
 		goto err;
-	alx_cv_contour_mask(tmp, conts, i);			dbg_show(2, tmp, NULL);
-	alx_cv_dilate(tmp, 2);					dbg_show(3, tmp, NULL);
+	alx_cv_contour_mask(mask, conts, i);			dbg_show(2, mask, NULL);
+	alx_cv_dilate(mask, 2);					dbg_show(3, mask, NULL);
+
+	/* Find BKGD */
+	alx_cv_clone(bkgd, img);				dbg_show(2, bkgd, NULL);
+	alx_cv_median(bkgd);					dbg_show(2, bkgd, NULL);
+	alx_cv_border(bkgd, 1);			dbg_update_win(); dbg_show(3, bkgd, NULL);
+	alx_cv_invert(mask);					dbg_show(2, mask, NULL);
+	alx_cv_and_2ref(bkgd, mask);				dbg_show(2, bkgd, NULL);
+
+	/* Clean symbol */
+	alx_cv_border(img, 1);			dbg_update_win(); dbg_show(3, img, NULL);
+	alx_cv_invert(mask);					dbg_show(2, mask, NULL);
+	alx_cv_and_2ref(img, mask);				dbg_show(2, img, NULL);
+	alx_cv_or_2ref(img, bkgd);				dbg_show(2, img, NULL);
 
 	/* deinit */
 	status	= 0;
 err:	alx_cv_deinit_conts(conts);
 	alx_cv_free_conts(conts);
-err1:	alx_cv_deinit_img(tmp);
-err0:	alx_cv_free_img(tmp);
+err3:	alx_cv_deinit_img(bkgd);
+err2:	alx_cv_free_img(bkgd);
+err1:	alx_cv_deinit_img(mask);
+err0:	alx_cv_free_img(mask);
 	return	status;
 }
 
