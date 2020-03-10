@@ -43,7 +43,7 @@
 /******************************************************************************
  ******* macro ****************************************************************
  ******************************************************************************/
-#define DBG	3
+#define DBG	0
 
 #ifdef DBG
 #define dbg_show(dbg, img, msg)		do				\
@@ -299,13 +299,14 @@ int	find_symbols	(img_s *img)
 	alx_cv_dilate_erode(tmp, 10);				dbg_show(3, tmp, NULL);
 	alx_cv_erode_dilate(tmp, 10);				dbg_show(3, tmp, NULL);
 	alx_cv_bkgd_mask(tmp);					dbg_show(3, tmp, NULL);
-	alx_cv_cvt_color(tmp, ALX_CV_COLOR_GRAY2BGR);		dbg_show(3, tmp, NULL);
+	alx_cv_component(clean, ALX_CV_CMP_BGR_R);		dbg_show(3, clean, NULL);
 	alx_cv_or_2ref(clean, tmp);				dbg_show(2, clean, NULL);
 
 	/* Find syms */
 	alx_cv_clone(tmp, clean);				dbg_show(3, tmp, NULL);
 	alx_cv_smooth(tmp, ALX_CV_SMOOTH_MEDIAN, 3);		dbg_show(3, tmp, NULL);
-	alx_cv_black_mask(tmp, 80, 16, 1);			dbg_show(3, tmp, NULL);
+	alx_cv_threshold(tmp, ALX_CV_THRESH_BINARY_INV, 80);
+								dbg_show(3, tmp, NULL);
 	alx_cv_dilate(tmp, 3);					dbg_show(3, tmp, NULL);
 	alx_cv_holes_fill(tmp);					dbg_show(3, tmp, NULL);
 	alx_cv_erode_dilate(tmp, 20);				dbg_show(3, tmp, NULL);
