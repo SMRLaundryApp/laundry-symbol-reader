@@ -38,6 +38,7 @@
 #include <libalx/extra/cv/imgproc/filter/edges.h>
 #include <libalx/extra/cv/imgproc/filter/smooth.h>
 #include <libalx/extra/cv/imgproc/geometric/rotate.h>
+#include <libalx/extra/cv/imgproc/histogram/hist.h>
 #include <libalx/extra/cv/imgproc/miscellaneous/color.h>
 #include <libalx/extra/cv/imgproc/miscellaneous/fill.h>
 #include <libalx/extra/cv/imgproc/miscellaneous/threshold.h>
@@ -101,6 +102,8 @@ static
 int	find_symbols_vertically		(img_s *img);
 static
 int	find_symbols_horizontally	(img_s *img);
+static
+int	align_symbols			(img_s *img);
 static
 int	isolate_symbols			(img_s *restrict img,
 					 img_s *syms[static restrict MAX_SYMBOLS],
@@ -199,6 +202,9 @@ int	proc	(const char *fname)
 	if (find_symbols_horizontally(img))
 		goto err;
 	status--;
+	if (align_symbols(img))
+		goto err;
+	status--;
 	if (isolate_symbols(img, syms, &nsyms))
 		goto err;
 	status--;
@@ -226,7 +232,7 @@ int	find_label			(img_s *img)
 	const cont_s	*lbl;
 	rect_rot_s	*rect_rot;
 	rect_s		*rect;
-	ptrdiff_t	ctr_x, ctr_y, w, h, x, y, b;
+	ptrdiff_t	x, y, w, h, b;
 	int		status;
 
 	/* init */
@@ -246,7 +252,7 @@ int	find_label			(img_s *img)
 	/* Find label */
 	status--;
 	alx_cv_clone(tmp, img);					dbg_show(2, tmp, NULL);
-	alx_cv_white_mask(tmp, 32, 16, 24);			dbg_show(3, tmp, NULL);
+	alx_cv_white_mask(tmp, 50, 60, 40);			dbg_show(3, tmp, NULL);
 	alx_cv_dilate_erode(tmp, 10);				dbg_show(3, tmp, NULL);
 	alx_cv_erode_dilate(tmp, 30);				dbg_show(3, tmp, NULL);
 	alx_cv_contours(tmp, conts);				dbg_show(2, tmp, NULL);
@@ -256,12 +262,12 @@ int	find_label			(img_s *img)
 
 	/* Align & crop to label */
 	status--;
-	alx_cv_rotate_2rect(img, rect_rot);			dbg_show(3, img, NULL);
-	alx_cv_extract_rect_rot(rect_rot, &ctr_x, &ctr_y, &w, &h, NULL);
+	alx_cv_rotate_2rect(img, rect_rot, rect);		dbg_show(3, img, NULL);
+	alx_cv_extract_rect(rect, &x, &y, &w, &h);
 	b	= ALX_MAX(w / 2, h / 2);
 	alx_cv_border(img, b);			dbg_update_win(); dbg_show(3, img, NULL);
-	x	= ctr_x - w / 2 + b;
-	y	= ctr_y - h / 2 + b;
+	x	+= b;
+	y	+= b;
 	if (alx_cv_init_rect(rect, x, y, w, h))
 		goto err;
 	alx_cv_roi_set(img, rect);		dbg_update_win(); dbg_show(1, img, NULL);
@@ -325,28 +331,32 @@ int	find_symbols_vertically		(img_s *img)
 	alx_cv_or_2ref(clean, bkgd);				dbg_show(2, clean, NULL);
 
 	/* Find syms */
+	status--;
 	alx_cv_clone(tmp, clean);				dbg_show(3, tmp, NULL);
 	alx_cv_normalize(tmp);					dbg_show(3, tmp, NULL);
 	alx_cv_smooth(tmp, ALX_CV_SMOOTH_MEDIAN, 5);		dbg_show(3, tmp, NULL);
 	alx_cv_canny(tmp, 127, 200, 3, true);			dbg_show(3, tmp, NULL);
-	alx_cv_dilate(tmp, 2);					dbg_show(3, tmp, NULL);
+	alx_cv_dilate_h(tmp, 1);				dbg_show(3, tmp, NULL);
+	alx_cv_dilate(tmp, 1);					dbg_show(3, tmp, NULL);
 	alx_cv_holes_fill(tmp);					dbg_show(3, tmp, NULL);
-	alx_cv_erode_dilate(tmp, 20);				dbg_show(3, tmp, NULL);
-	alx_cv_lines_horizontal(tmp);				dbg_show(3, tmp, NULL);
-	alx_cv_erode(tmp, 5);					dbg_show(3, tmp, NULL);
+	alx_cv_erode_dilate(tmp, 15);				dbg_show(3, tmp, NULL);
+	alx_cv_extract_imgdata(tmp, NULL, &w, NULL, NULL, NULL, NULL);
+	alx_cv_dilate_h(tmp, w / 6);				dbg_show(3, tmp, NULL);
 	alx_cv_contours(tmp, conts);				dbg_show(2, tmp, NULL);
 	if (alx_cv_conts_largest(&syms, NULL, conts))
 		goto err; 
 	alx_cv_bounding_rect(rect, syms);
+	alx_cv_extract_rect(rect, NULL, &y, NULL, &h);
 
-	alx_cv_extract_rect(rect, &x, &y, &w, &h);
-	y += h / 2;
-	h *= 2;
-	y -= h / 2;
-	if (alx_cv_init_rect(rect, x, y, w, h))
-		goto err;
 
 	/* Crop to symbols */
+	status--;
+	y	+= h / 2;
+	h	*= 2;
+	y	-= h / 2;
+	x	= 0;
+	if (alx_cv_init_rect(rect, x, y, w, h))
+		goto err;
 	alx_cv_roi_set(img, rect);		dbg_update_win(); dbg_show(1, img, NULL);
 
 	/* deinit */
@@ -392,31 +402,91 @@ int	find_symbols_horizontally	(img_s *img)
 	alx_cv_init_rect(rect, 20, 0, w - 40, h);
 	alx_cv_roi_set(tmp, rect);		dbg_update_win(); dbg_show(3, tmp, NULL);
 	alx_cv_normalize(tmp);					dbg_show(3, tmp, NULL);
-	alx_cv_threshold(tmp, ALX_CV_THRESH_BINARY_INV, 127);	dbg_show(3, tmp, NULL);
-	alx_cv_border(tmp, 20);			dbg_update_win(); dbg_show(3, tmp, NULL);
-	alx_cv_dilate(tmp, 5);					dbg_show(3, tmp, NULL);
-	alx_cv_holes_fill(tmp);					dbg_show(3, tmp, NULL);
-	alx_cv_erode_dilate(tmp, 10);				dbg_show(3, tmp, NULL);
-	alx_cv_dilate_erode(tmp, 20);				dbg_show(3, tmp, NULL);
-	alx_cv_lines_vertical(tmp);				dbg_show(3, tmp, NULL);
-	alx_cv_dilate(tmp, 20);					dbg_show(3, tmp, NULL);
+	alx_cv_threshold(tmp, ALX_CV_THRESH_BINARY_INV, ALX_CV_THR_OTSU);
+								dbg_show(3, tmp, NULL);
+	alx_cv_dilate_h(tmp, w / 40);				dbg_show(3, tmp, NULL);
+	alx_cv_dilate_v(tmp, h / 40);				dbg_show(3, tmp, NULL);
 	alx_cv_contours(tmp, conts);				dbg_show(2, tmp, NULL);
 	if (alx_cv_conts_largest(&syms, NULL, conts))
 		goto err;
 	alx_cv_bounding_rect(rect, syms);
-	alx_cv_extract_rect(rect, &x, &y, &w, &h);
-	y = 0;
-	h -= 40;
-	if (alx_cv_init_rect(rect, x, y, w, h))
-		goto err;
+	alx_cv_extract_rect(rect, &x, NULL, &w, NULL);
 
 	/* Crop to symbols */
-
+	status--;
+	y	= 0;
+	w	+= 40;
+	if (alx_cv_init_rect(rect, x, y, w, h))
+		goto err;
 	alx_cv_roi_set(img, rect);		dbg_update_win(); dbg_show(1, img, NULL);
 
 	/* deinit */
 	status	= 0;
 err:	alx_cv_free_rect(rect);
+err2:	alx_cv_deinit_conts(conts);
+	alx_cv_free_conts(conts);
+err1:	alx_cv_deinit_img(tmp);
+err0:	alx_cv_free_img(tmp);
+	return	status;
+}
+
+static
+int	align_symbols			(img_s *img)
+{
+	img_s		*tmp;
+	conts_s		*conts;
+	const cont_s	*syms;
+	rect_rot_s	*rect_rot;
+	rect_s		*rect;
+	ptrdiff_t	x, y, w, h;
+	ptrdiff_t	b;
+	int		status;
+
+	/* init */
+	status	= -1;
+	if (alx_cv_alloc_img(&tmp))
+		return	status;
+	if (alx_cv_init_img(tmp, 1, 1))
+		goto err0;
+	if (alx_cv_alloc_conts(&conts))
+		goto err1;
+	alx_cv_init_conts(conts);
+	if (alx_cv_alloc_rect_rot(&rect_rot))
+		goto err2;
+	if (alx_cv_alloc_rect(&rect))
+		goto err3;
+
+	/* Find symbols */
+	status--;
+	alx_cv_clone(tmp, img);					dbg_show(2, tmp, NULL);
+	alx_cv_extract_imgdata(tmp, NULL, &w, &h, NULL, NULL, NULL);
+	alx_cv_normalize(tmp);					dbg_show(3, tmp, NULL);
+	alx_cv_threshold(tmp, ALX_CV_THRESH_BINARY_INV, ALX_CV_THR_OTSU);
+								dbg_show(3, tmp, NULL);
+	alx_cv_dilate_h(tmp, w / 40);				dbg_show(3, tmp, NULL);
+	alx_cv_dilate_v(tmp, h / 40);				dbg_show(3, tmp, NULL);
+	alx_cv_contours(tmp, conts);				dbg_show(2, tmp, NULL);
+	if (alx_cv_conts_largest(&syms, NULL, conts))
+		goto err;
+	alx_cv_min_area_rect(rect_rot, syms);
+
+	/* Aling & crop to symbols */
+	alx_cv_rotate_2rect(img, rect_rot, rect);		dbg_show(3, img, NULL);
+	alx_cv_extract_rect(rect, &x, &y, &w, &h);
+printf("%ti %ti %ti", x, w, h);
+	b	= ALX_MAX(w / 2, h / 2);
+	b	= ALX_MAX(b, 0);
+	alx_cv_border(img, b);			dbg_update_win(); dbg_show(3, img, NULL);
+	x	+= b;
+	y	+= b;
+	if (alx_cv_init_rect(rect, x, y, w, h))
+		goto err;
+	alx_cv_roi_set(img, rect);		dbg_update_win(); dbg_show(1, img, NULL);
+
+	/* deinit */
+	status	= 0;
+err:	alx_cv_free_rect(rect);
+err3:	alx_cv_free_rect_rot(rect_rot);
 err2:	alx_cv_deinit_conts(conts);
 	alx_cv_free_conts(conts);
 err1:	alx_cv_deinit_img(tmp);
