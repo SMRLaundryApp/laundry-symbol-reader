@@ -529,10 +529,9 @@ int	isolate_symbols			(img_s *restrict img,
 //	alx_cv_threshold(tmp, ALX_CV_THRESH_BINARY_INV, 80);	dbg_show(3, tmp, NULL);
 	alx_cv_dilate(tmp, 1);					dbg_show(3, tmp, NULL);
 //	alx_cv_dilate_erode(tmp, 8);				dbg_show(3, tmp, NULL);
-	alx_cv_border_black(tmp, 1);		dbg_update_win(); dbg_show(3, tmp, NULL);
 	alx_cv_holes_fill(tmp);					dbg_show(3, tmp, NULL);
 	alx_cv_erode_dilate(tmp, 12);				dbg_show(3, tmp, NULL);
-	alx_cv_border_black(tmp, b - 1);	dbg_update_win(); dbg_show(3, tmp, NULL);
+	alx_cv_border_black(tmp, b);		dbg_update_win(); dbg_show(3, tmp, NULL);
 	alx_cv_contours(tmp, conts);				dbg_show(2, tmp, NULL);
 	if (alx_cv_extract_conts(conts, NULL, n))
 		goto err;
@@ -613,7 +612,6 @@ int	clean_symbol	(img_s *img)
 	alx_cv_threshold(mask, ALX_CV_THRESH_BINARY_INV, ALX_CV_THR_OTSU);
 								dbg_show(3, mask, NULL);
 	alx_cv_dilate(mask, 2);					dbg_show(3, mask, NULL);
-	alx_cv_border_black(mask, 1);		dbg_update_win(); dbg_show(3, mask, NULL);
 	alx_cv_holes_fill(mask);				dbg_show(3, mask, NULL);
 	alx_cv_contours(mask, conts);				dbg_show(2, mask, NULL);
 	alx_cv_extract_imgdata(mask, NULL, &w, &h, NULL, NULL, NULL);
@@ -625,12 +623,10 @@ int	clean_symbol	(img_s *img)
 	/* Find BKGD */
 	alx_cv_clone(bkgd, img);				dbg_show(2, bkgd, NULL);
 	alx_cv_median(bkgd);					dbg_show(2, bkgd, NULL);
-	alx_cv_border1D_median(bkgd, 1);		dbg_update_win(); dbg_show(3, bkgd, NULL);
 	alx_cv_invert(mask);					dbg_show(2, mask, NULL);
 	alx_cv_and_2ref(bkgd, mask);				dbg_show(2, bkgd, NULL);
 
 	/* Clean symbol */
-	alx_cv_border1D_median(img, 1);		dbg_update_win(); dbg_show(3, img, NULL);
 	alx_cv_invert(mask);					dbg_show(2, mask, NULL);
 	alx_cv_and_2ref(img, mask);				dbg_show(2, img, NULL);
 	alx_cv_or_2ref(img, bkgd);				dbg_show(2, img, NULL);
