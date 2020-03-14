@@ -232,7 +232,6 @@ int	find_label			(img_s *img)
 	const cont_s	*lbl;
 	rect_rot_s	*rect_rot;
 	rect_s		*rect;
-	ptrdiff_t	x, y, w, h, b;
 	int		status;
 
 	/* init */
@@ -263,13 +262,6 @@ int	find_label			(img_s *img)
 	/* Align & crop to label */
 	status--;
 	alx_cv_rotate_2rect(img, rect_rot, rect);		dbg_show(3, img, NULL);
-	alx_cv_extract_rect(rect, &x, &y, &w, &h);
-	b	= ALX_MAX(w / 2, h / 2);
-	alx_cv_border_black(img, b);		dbg_update_win(); dbg_show(3, img, NULL);
-	x	+= b;
-	y	+= b;
-	if (alx_cv_init_rect(rect, x, y, w, h))
-		goto err;
 	alx_cv_roi_set(img, rect);		dbg_update_win(); dbg_show(1, img, NULL);
 
 	/* deinit */
@@ -437,8 +429,7 @@ int	align_symbols			(img_s *img)
 	const cont_s	*syms;
 	rect_rot_s	*rect_rot;
 	rect_s		*rect;
-	ptrdiff_t	x, y, w, h;
-	ptrdiff_t	b;
+	ptrdiff_t	w, h;
 	int		status;
 
 	/* init */
@@ -471,14 +462,6 @@ int	align_symbols			(img_s *img)
 
 	/* Aling & crop to symbols */
 	alx_cv_rotate_2rect(img, rect_rot, rect);		dbg_show(3, img, NULL);
-	alx_cv_extract_rect(rect, &x, &y, &w, &h);
-	b	= ALX_MAX(w / 2, h / 2);
-	b	= ALX_MAX(b, 0);
-	alx_cv_border1D_median(img, b);		dbg_update_win(); dbg_show(3, img, NULL);
-	x	+= b;
-	y	+= b;
-	if (alx_cv_init_rect(rect, x, y, w, h))
-		goto err;
 	alx_cv_roi_set(img, rect);		dbg_update_win(); dbg_show(1, img, NULL);
 
 	/* deinit */
@@ -498,7 +481,6 @@ int	isolate_symbols			(img_s *restrict img,
 					 ptrdiff_t *restrict n)
 {
 	img_s		*tmp;
-	ptrdiff_t	b;
 	conts_s		*conts;
 	const cont_s	*cont;
 	rect_s		*rect;
@@ -520,9 +502,7 @@ int	isolate_symbols			(img_s *restrict img,
 
 	/* Find symbols */
 	status--;
-	b	= 100;
 	alx_cv_clone(tmp, img);					dbg_show(2, tmp, NULL);
-	alx_cv_border1D_median(img, b);		dbg_update_win(); dbg_show(3, img, NULL);
 	alx_cv_normalize(tmp);					dbg_show(3, tmp, NULL);
 	alx_cv_smooth(tmp, ALX_CV_SMOOTH_MEDIAN, 3);		dbg_show(3, tmp, NULL);
 	alx_cv_canny(tmp, 127, 200, 3, false);			dbg_show(3, tmp, NULL);
@@ -531,7 +511,6 @@ int	isolate_symbols			(img_s *restrict img,
 //	alx_cv_dilate_erode(tmp, 8);				dbg_show(3, tmp, NULL);
 	alx_cv_holes_fill(tmp);					dbg_show(3, tmp, NULL);
 	alx_cv_erode_dilate(tmp, 12);				dbg_show(3, tmp, NULL);
-	alx_cv_border_black(tmp, b);		dbg_update_win(); dbg_show(3, tmp, NULL);
 	alx_cv_contours(tmp, conts);				dbg_show(2, tmp, NULL);
 	if (alx_cv_extract_conts(conts, NULL, n))
 		goto err;
