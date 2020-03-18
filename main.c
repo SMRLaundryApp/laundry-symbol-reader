@@ -15,7 +15,9 @@
 
 
 #define ALX_NO_PREFIX
+#include <libalx/base/compiler/size.h>
 #include <libalx/base/errno/perror.h>
+#include <libalx/base/stdio/printf/sbprintf.h>
 #include <libalx/base/stdio/seekc.h>
 #include <libalx/base/stdlib/maximum.h>
 #include <libalx/base/stdlib/minimum.h>
@@ -50,7 +52,33 @@
 /******************************************************************************
  ******* macro ****************************************************************
  ******************************************************************************/
-#define DBG	03
+#define DBG			03
+#define DBG_SHOW_WAIT		false
+#define DBG_SHOWTIME(dbg)	(					\
+{									\
+	int	tm_;							\
+									\
+	switch (dbg) {							\
+	case 0:								\
+		tm_	= 5000;						\
+		break;							\
+	case 1:								\
+		tm_	= 1000;						\
+		break;							\
+	case 2:								\
+		tm_	= 300;						\
+		break;							\
+	case 3:								\
+		tm_	= 100;						\
+		break;							\
+	}								\
+									\
+	if (DBG_SHOW_WAIT)						\
+		tm_	= -1;						\
+									\
+	tm_;								\
+}									\
+)
 
 #ifdef DBG
 #define dbg_show(dbg, img, msg)		do				\
@@ -58,7 +86,7 @@
 									\
 	if (dbg <= DBG) {						\
 		perrorx(msg);						\
-		alx_cv_imshow(img, "dbg", -1);				\
+		alx_cv_imshow(img, "dbg", DBG_SHOWTIME(dbg));		\
 	}								\
 } while (0);
 
@@ -76,14 +104,119 @@
 #define MAX_SYMBOLS	(6)
 
 
+#define TEMPLATES_DIR	"templates/"
+#define T_BASE_DIR	TEMPLATES_DIR "base/"
+#define T_INNER_DIR	TEMPLATES_DIR "inner/"
+#define TEMPLATES_EXT	"png"
+
+
 /******************************************************************************
  ******* enum *****************************************************************
  ******************************************************************************/
+enum	Base_Template {
+	BASE_T_BLEACH,
+	BASE_T_PRO,
+	BASE_T_IRON,
+	BASE_T_WASH,
+	BASE_T_DRY
+};
+
+enum	T_Inner_Meaning {
+	T_INNER_LO_T,
+	T_INNER_MED_T,
+	T_INNER_HI_T,
+	T_INNER_30,
+	T_INNER_40,
+	T_INNER_50,
+	T_INNER_60,
+	T_INNER_70,
+	T_INNER_95,
+	T_INNER_A,
+	T_INNER_F,
+	T_INNER_P,
+	T_INNER_W
+};
+
+enum	T_Inner_Fname {
+	T_INNER_FNAME_1_DOT,
+	T_INNER_FNAME_2_DOT,
+	T_INNER_FNAME_3_DOT,
+	T_INNER_FNAME_4_DOT,
+	T_INNER_FNAME_5_DOT,
+	T_INNER_FNAME_6_DOT,
+	T_INNER_FNAME_30,
+	T_INNER_FNAME_40,
+	T_INNER_FNAME_50,
+	T_INNER_FNAME_60,
+	T_INNER_FNAME_95,
+	T_INNER_FNAME_A,
+	T_INNER_FNAME_F,
+	T_INNER_FNAME_P,
+	T_INNER_FNAME_W
+};
 
 
 /******************************************************************************
  ******* struct / union *******************************************************
  ******************************************************************************/
+
+
+/******************************************************************************
+ ******* variables ************************************************************
+ ******************************************************************************//*
+static const char *const	t_base_meaning[] = {
+	"bleach",
+	"professional clean",
+	"iron",
+	"wash",
+	"dry"
+};
+*/
+static const char *const	t_base_fnames[] = {
+	"bleach",
+	"pro",
+	"iron",
+	"wash",
+	"dry"
+};
+/*
+static const char *const	t_inner_meaning[] = {
+	"low temp",
+	"medium temp",
+	"high temp",
+	"30",
+	"40",
+	"50",
+	"60",
+	"70",
+	"95",
+	"any solvent",
+	"petroleum only",
+	"wet clean",
+	"any solvent except TCE"
+};
+*/
+static const char *const	t_inner_fnames[] = {
+	"1_dot",
+	"2_dot",
+	"3_dot",
+	"4_dot",
+	"5_dot",
+	"6_dot",
+	"30",
+	"40",
+	"50",
+	"60",
+	"95",
+	"A",
+	"F",
+	"P",
+	"W"
+};
+
+static img_s	*base_templates[ARRAY_SIZE(t_base_fnames)];
+static img_s	*base_templates_not[ARRAY_SIZE(t_base_fnames)];
+static img_s	*inner_templates[ARRAY_SIZE(t_inner_fnames)];
 
 
 /******************************************************************************
@@ -96,6 +229,8 @@ void	deinit	(img_s *restrict img, img_s *syms[static restrict MAX_SYMBOLS]);
 static
 int	proc	(const char *fname);
 
+static
+int	load_templates			(void);
 static
 int	find_label			(img_s *img);
 static
@@ -118,13 +253,15 @@ int	clean_symbol	(img_s *sym);
 int	main	(int argc, char *argv[])
 {
 	const char	*fname;
+	int		status;
 
 	if (argc != 2)
 		return	1;
 
 	fname	= argv[1];
-	if (proc(fname))
-		return	2;
+	status	= -proc(fname);
+	if (status)
+		return	status;
 
 	return	0;
 }
@@ -137,6 +274,9 @@ static
 int	init	(img_s **restrict img, img_s *syms[static restrict MAX_SYMBOLS])
 {
 	ptrdiff_t	i;
+	ptrdiff_t	j;
+	ptrdiff_t	k;
+	ptrdiff_t	l;
 
 	if (alx_cv_alloc_img(img))
 		return	-1;
@@ -148,9 +288,43 @@ int	init	(img_s **restrict img, img_s *syms[static restrict MAX_SYMBOLS])
 		if (alx_cv_init_img(syms[i], 1, 1))
 			goto err2;
 	}
+	for (j = 0; j < ARRAY_SSIZE(base_templates); j++) {
+		if (alx_cv_alloc_img(&base_templates[j]))
+			goto err3;
+		if (alx_cv_init_img(base_templates[j], 1, 1))
+			goto err4;
+	}
+	for (k = 0; k < ARRAY_SSIZE(base_templates_not); k++) {
+		if (alx_cv_alloc_img(&base_templates_not[k]))
+			goto err5;
+		if (alx_cv_init_img(base_templates_not[k], 1, 1))
+			goto err6;
+	}
+	for (l = 0; l < ARRAY_SSIZE(inner_templates); l++) {
+		if (alx_cv_alloc_img(&inner_templates[l]))
+			goto err7;
+		if (alx_cv_init_img(inner_templates[l], 1, 1))
+			goto err8;
+	}
 	alx_cv_named_window("dbg", ALX_CV_WINDOW_NORMAL);
+
 	return	0;
 
+	for (; k >= 0; k--) {
+		alx_cv_deinit_img(inner_templates[l]);
+err8:		alx_cv_free_img(inner_templates[l]);
+err7:		continue;
+	}
+	for (; j >= 0; j--) {
+		alx_cv_deinit_img(base_templates_not[k]);
+err6:		alx_cv_free_img(base_templates_not[k]);
+err5:		continue;
+	}
+	for (; j >= 0; j--) {
+		alx_cv_deinit_img(base_templates[j]);
+err4:		alx_cv_free_img(base_templates[j]);
+err3:		continue;
+	}
 	for (; i >= 0; i--) {
 		alx_cv_deinit_img(syms[i]);
 err2:		alx_cv_free_img(syms[i]);
@@ -166,7 +340,19 @@ void	deinit	(img_s *restrict img, img_s *syms[static restrict MAX_SYMBOLS])
 {
 
 	alx_cv_destroy_all_windows();
-	for (ptrdiff_t i = MAX_SYMBOLS - 1; i >= 0; i--) {
+	for (ptrdiff_t i = 0; i < ARRAY_SSIZE(inner_templates); i++) {
+		alx_cv_deinit_img(inner_templates[i]);
+		alx_cv_free_img(inner_templates[i]);
+	}
+	for (ptrdiff_t i = 0; i < ARRAY_SSIZE(base_templates_not); i++) {
+		alx_cv_deinit_img(base_templates_not[i]);
+		alx_cv_free_img(base_templates_not[i]);
+	}
+	for (ptrdiff_t i = 0; i < ARRAY_SSIZE(base_templates); i++) {
+		alx_cv_deinit_img(base_templates[i]);
+		alx_cv_free_img(base_templates[i]);
+	}
+	for (ptrdiff_t i = 0; i < MAX_SYMBOLS; i++) {
 		alx_cv_deinit_img(syms[i]);
 		alx_cv_free_img(syms[i]);
 	}
@@ -189,6 +375,9 @@ int	proc	(const char *fname)
 		return	-1;
 	time_0 = clock();
 
+	status--;
+	if (load_templates())
+		goto err;
 	status--;
 	if (alx_cv_imread(img, fname))
 		goto err;
@@ -222,6 +411,33 @@ int	proc	(const char *fname)
 	status	= 0;
 err:	deinit(img, syms);
 	return	status;
+}
+
+static
+int	load_templates			(void)
+{
+	char	fname[FILENAME_MAX];
+
+	for (ptrdiff_t i = 0; i < ARRAY_SSIZE(base_templates); i++) {
+		if (sbprintf(fname, NULL, "%s/%s.%s", T_BASE_DIR,
+					t_base_fnames[i], TEMPLATES_EXT))
+			return	i + 100;
+		if (alx_cv_imread(base_templates[i], fname))
+			return	i + 200;		dbg_show(3, base_templates[i], NULL);
+		if (sbprintf(fname, NULL, "%s/%s_not.%s", T_BASE_DIR,
+					t_base_fnames[i], TEMPLATES_EXT))
+			return	i + 300;
+		if (alx_cv_imread(base_templates_not[i], fname))
+			return	i + 400;		dbg_show(3, base_templates_not[i], NULL);
+	}
+	for (ptrdiff_t i = 0; i < ARRAY_SSIZE(inner_templates); i++) {
+		if (sbprintf(fname, NULL, "%s/%s.%s", T_INNER_DIR,
+					t_inner_fnames[i], TEMPLATES_EXT))
+			return	i + 500;
+		if (alx_cv_imread(inner_templates[i], fname))
+			return	i + 600;		dbg_show(3, inner_templates[i], NULL);
+	}
+	return	0;
 }
 
 static
@@ -391,7 +607,7 @@ int	find_symbols_horizontally	(img_s *img)
 	alx_cv_clone(tmp, img);					dbg_show(2, tmp, NULL);
 	alx_cv_extract_imgdata(tmp, NULL, &w, &h, NULL, NULL, NULL);
 	alx_cv_init_rect(rect, 20, 0, w - 40, h);
-	alx_cv_roi_set(tmp, rect);		dbg_update_win(); dbg_show(3, tmp, NULL);
+	alx_cv_roi_set(tmp, rect);				dbg_show(3, tmp, NULL);
 	alx_cv_normalize(tmp);					dbg_show(3, tmp, NULL);
 	alx_cv_threshold(tmp, ALX_CV_THRESH_BINARY_INV, ALX_CV_THR_OTSU);
 								dbg_show(3, tmp, NULL);
@@ -409,7 +625,7 @@ int	find_symbols_horizontally	(img_s *img)
 	w	+= 40;
 	if (alx_cv_init_rect(rect, x, y, w, h))
 		goto err;
-	alx_cv_roi_set(img, rect);		dbg_update_win(); dbg_show(1, img, NULL);
+	alx_cv_roi_set(img, rect);				dbg_show(1, img, NULL);
 
 	/* deinit */
 	status	= 0;
@@ -462,7 +678,7 @@ int	align_symbols			(img_s *img)
 
 	/* Aling & crop to symbols */
 	alx_cv_rotate_2rect(img, rect_rot, rect);		dbg_show(3, img, NULL);
-	alx_cv_roi_set(img, rect);		dbg_update_win(); dbg_show(1, img, NULL);
+	alx_cv_roi_set(img, rect);				dbg_show(1, img, NULL);
 
 	/* deinit */
 	status	= 0;
@@ -549,7 +765,7 @@ int	isolate_symbols			(img_s *restrict img,
 		x	+= w / 2 - w_all / 2;
 		if (alx_cv_init_rect(rect, x, y_all, w_all, h_all))
 			goto err;
-		alx_cv_roi_set(syms[i], rect);	dbg_update_win(); dbg_show(1, syms[i], NULL);
+		alx_cv_roi_set(syms[i], rect);			dbg_show(1, syms[i], NULL);
 	}
 
 	/* deinit */
