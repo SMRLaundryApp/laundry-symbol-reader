@@ -108,6 +108,7 @@ int	init_templates	(void);
 void	deinit_templates(void);
 int	load_templates	(void);
 int	match_t_base	(img_s *restrict sym, int *code);
+int	match_t_inner	(img_s *restrict sym, int base_code, int *in_code);
 
 
 /******************************************************************************

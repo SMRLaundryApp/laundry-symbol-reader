@@ -116,8 +116,8 @@ int	extract_symbols	(img_s *restrict img)
 	alx_cv_dilate(tmp, 1);					dbg_show(3, tmp);
 //	alx_cv_dilate_erode(tmp, 8);				dbg_show(3, tmp);
 	alx_cv_holes_fill(tmp);					dbg_show(3, tmp);
-	alx_cv_erode_dilate(tmp, 12);				dbg_show(3, tmp);
-	alx_cv_contours(tmp, conts);				dbg_show(2, tmp);
+	alx_cv_erode_dilate(tmp, 12);				dbg_show(2, tmp);
+	alx_cv_contours(tmp, conts);
 	if (alx_cv_extract_conts(conts, NULL, &nsyms))
 		goto err;
 	printf("--%i--\n", (int)nsyms);
@@ -188,8 +188,8 @@ int	clean_symbol	(img_s *img)
 	alx_cv_threshold(mask, ALX_CV_THRESH_BINARY_INV, ALX_CV_THR_OTSU);
 								dbg_show(3, mask);
 	alx_cv_dilate(mask, 2);					dbg_show(3, mask);
-	alx_cv_holes_fill(mask);				dbg_show(3, mask);
-	alx_cv_contours(mask, conts);				dbg_show(2, mask);
+	alx_cv_holes_fill(mask);				dbg_show(2, mask);
+	alx_cv_contours(mask, conts);
 	alx_cv_extract_imgdata(mask, NULL, &w, &h, NULL, NULL, NULL);
 	if (alx_cv_conts_closest(NULL, &i, conts, w / 2, h / 2, NULL))
 		goto err;
@@ -240,14 +240,56 @@ int	symbol_base	(const img_s *restrict sym, img_s *restrict base)
 								dbg_show(3, base);
 	alx_cv_clone(mask, base);				dbg_show(3, mask);
 	alx_cv_dilate(mask, 1);					dbg_show(3, mask);
-	alx_cv_contours(mask, conts);				dbg_show(3, mask);
+	alx_cv_contours(mask, conts);
 	if (alx_cv_conts_largest(&cont, &i, conts))
 		goto err;
 	alx_cv_contour_mask(mask, conts, i);			dbg_show(3, mask);
-	alx_cv_and_2ref(base, mask);				dbg_show(3, mask);
+	alx_cv_and_2ref(base, mask);				dbg_show(3, base);
 	alx_cv_holes_fill(base);				dbg_show(3, base);
 	alx_cv_bounding_rect(rect, cont);
 	alx_cv_roi_set(base, rect);				dbg_show(2, base);
+
+
+	/* deinit */
+	status	= 0;
+err:	alx_cv_deinit_rect(rect);
+err1:	alx_cv_deinit_conts(conts);
+err0:	alx_cv_deinit_img(mask);
+	return	status;
+}
+
+int	symbol_inner	(const img_s *restrict sym, img_s *restrict in)
+{
+	img_s		*mask;
+	conts_s		*conts;
+	const cont_s	*cont;
+	rect_s		*rect;
+	int		status;
+
+	/* init */
+	status	= -1;
+	if (alx_cv_init_img(&mask))
+		return	status;
+	if (alx_cv_init_conts(&conts))
+		goto err0;
+	if (alx_cv_init_rect(&rect))
+		goto err1;
+
+	/* Find base */
+	status--;
+	alx_cv_clone(in, sym);					dbg_show(2, in);
+	alx_cv_threshold(in, ALX_CV_THRESH_BINARY_INV, ALX_CV_THR_OTSU);
+								dbg_show(3, in);
+	alx_cv_clone(mask, in);					dbg_show(3, mask);
+	alx_cv_holes_mask(mask);				dbg_show(3, mask);
+	alx_cv_holes_fill(mask);				dbg_show(3, mask);
+	alx_cv_and_2ref(in, mask);				dbg_show(3, in);
+	alx_cv_holes_fill(in);					dbg_show(3, in);
+	alx_cv_contours(in, conts);
+	if (alx_cv_conts_largest(&cont, NULL, conts))
+		goto err;
+	alx_cv_bounding_rect(rect, cont);
+	alx_cv_roi_set(in, rect);				dbg_show(2, in);
 
 
 	/* deinit */

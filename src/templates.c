@@ -9,6 +9,7 @@
  ******************************************************************************/
 #include "templates.h"
 
+#include <math.h>
 #include <stddef.h>
 #include <stdio.h>
 
@@ -214,14 +215,14 @@ int	load_t_base	(img_s *t, const char *fname)
 	if (alx_cv_imread_gray(t, fname))
 		goto err;					dbg_show(3, t);
 	alx_cv_threshold(t, ALX_CV_THRESH_BINARY_INV, ALX_CV_THR_OTSU);
-								dbg_show(3, t);
-	alx_cv_holes_fill(t);					dbg_show(3, t);
-	alx_cv_contours(t, conts);				dbg_show(3, t);
+								dbg_show(4, t);
+	alx_cv_holes_fill(t);					dbg_show(4, t);
+	alx_cv_contours(t, conts);				dbg_show(4, t);
 	status--;
 	if (alx_cv_conts_largest(&cont, NULL, conts))
 		goto err;
 	alx_cv_bounding_rect(rect, cont);
-	alx_cv_roi_set(t, rect);				dbg_show(2, t);
+	alx_cv_roi_set(t, rect);				dbg_show(3, t);
 
 	/* deinit */
 	status	= 0;
@@ -252,16 +253,16 @@ int	load_t_inner	(img_s *t, const char *fname)
 	if (alx_cv_imread_gray(t, fname))
 		goto err;					dbg_show(3, t);
 	alx_cv_threshold(t, ALX_CV_THRESH_BINARY_INV, ALX_CV_THR_OTSU);
-								dbg_show(3, t);
-	alx_cv_border_black(t, 5);				dbg_show(3, t);
-	alx_cv_clone(tmp, t);					dbg_show(3, tmp);
-	alx_cv_dilate_erode(tmp, 5);				dbg_show(3, tmp);
-	alx_cv_holes_fill(t);					dbg_show(3, tmp);
-	alx_cv_contours(tmp, conts);				dbg_show(3, t);
+								dbg_show(4, t);
+	alx_cv_border_black(t, 5);				dbg_show(4, t);
+	alx_cv_clone(tmp, t);					dbg_show(4, tmp);
+	alx_cv_dilate_erode(tmp, 5);				dbg_show(4, tmp);
+	alx_cv_holes_fill(t);					dbg_show(4, tmp);
+	alx_cv_contours(tmp, conts);				dbg_show(4, t);
 	if (alx_cv_conts_largest(&cont, NULL, conts))
 		goto err;
 	alx_cv_bounding_rect(rect, cont);
-	alx_cv_roi_set(t, rect);				dbg_show(2, t);
+	alx_cv_roi_set(t, rect);				dbg_show(3, t);
 
 	/* deinit */
 	status	= 0;
@@ -288,19 +289,19 @@ int	match_t_base	(img_s *restrict sym, int *code)
 	/* Find base */
 	status--;
 	if (symbol_base(sym, base))
-		goto err;
+		goto err;					dbg_show(2, base);
 	status--;
-	match	= 0;
-								dbg_show(2, base);
+	match	= -INFINITY;
+	*code	= -1;
 	for (ptrdiff_t i = 0; i < ARRAY_SSIZE(base_templates); i++) {
 		m	= alx_cv_compare_bitwise(base, base_templates[i], 2);
-printf("match: %lf\n", m);
+		printf("match: %lf\n", m);
 		if (m >= match) {
 			*code	= i;
 			match	= m;				dbg_show(2, base_templates[i]);
 		}
 		m	= alx_cv_compare_bitwise(base, base_templates_not[i], 2);
-printf("match: %lf\n", m);
+		printf("match: %lf\n", m);
 		if (m >= match) {
 			*code	= i + T_BASE_NOT;
 			match	= m;				dbg_show(2, base_templates_not[i]);
@@ -311,6 +312,47 @@ printf("match: %lf\n", m);
 	status	= 0;
 err:	alx_cv_deinit_conts(conts);
 err0:	alx_cv_deinit_img(base);
+	return	status;
+}
+
+int	match_t_inner	(img_s *restrict sym, int base_code, int *in_code)
+{
+	img_s		*in;
+	conts_s		*conts;
+	double		match, m;
+	int		status;
+
+	if (base_code >= T_BASE_NOT) {
+		*in_code	= -1;
+		return	1;
+	}
+
+	/* init */
+	status	= -1;
+	if (alx_cv_init_img(&in))
+		return	status;
+	if (alx_cv_init_conts(&conts))
+		goto err0;
+
+	/* Find inner */
+	status--;
+	if (symbol_inner(sym, in))
+		goto err;					dbg_show(2, in);
+	status--;
+	match	= -INFINITY;
+	for (ptrdiff_t i = 0; i < ARRAY_SSIZE(inner_templates); i++) {
+		m	= alx_cv_compare_bitwise(in, inner_templates[i], 0);
+		printf("match: %lf\n", m);
+		if (m >= match) {
+			*in_code	= i;
+			match		= m;			dbg_show(2, inner_templates[i]);
+		}
+	}
+
+	/* deinit */
+	status	= 0;
+err:	alx_cv_deinit_conts(conts);
+err0:	alx_cv_deinit_img(in);
 	return	status;
 }
 

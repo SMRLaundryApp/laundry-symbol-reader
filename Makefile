@@ -36,7 +36,6 @@ DEP	= $(OBJ:.o=.d)
 
 .PHONY: all
 all: wash
-	@:
 
 $(BUILD_DIR)/%.d: $(SRC_DIR)/%.c
 	$(Q)mkdir -p		$(@D)/

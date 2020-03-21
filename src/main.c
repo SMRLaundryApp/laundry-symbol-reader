@@ -104,7 +104,7 @@ int	proc	(const char *fname)
 	clock_t		time_0;
 	clock_t		time_1;
 	double		time_tot;
-	int		code_base;
+	int		code_base, code_in;
 	int		status;
 
 	status	= -1;
@@ -138,6 +138,8 @@ int	proc	(const char *fname)
 		if (clean_symbol(symbols[i]))
 			goto err;
 		if (match_t_base(symbols[i], &code_base))
+			goto err;
+		if (match_t_inner(symbols[i], code_base, &code_in) < 0)
 			goto err;
 	}
 
