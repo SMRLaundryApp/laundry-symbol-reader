@@ -33,7 +33,7 @@ import libalx.printf	as alx
 ################################################################################
 # 0: Only solution;  >=1 debugging info
 
-DBG	= 0;
+DBG	= 3;
 
 def dbg_printf(dbg, fmt, *args):
 	if (dbg > DBG):
@@ -75,13 +75,13 @@ args = vars(ap.parse_args())
 img_src_fname	= args["image"]
 
 templates_ext	= ".png";
-templates_dir	= "templates/";
-templates_names	= [
+t_base_dir	= "templates/base/"
+t_base_names	= [
 	"bleach",
-	"dry_clean",
+	"pro",
 	"iron",
-	"machine_wash",
-	"tumble_dry"
+	"wash",
+	"dry"
 ];
 t_inner_dir	= "templates/inner/";
 t_inner_names	= [
@@ -136,7 +136,7 @@ def wait_for_ESC():
 			break;
 
 def get_template(name):
-	fname	= templates_dir + name + templates_ext;
+	fname	= t_base_dir + name + templates_ext;
 	tmp	= cv.imread(fname, cv.IMREAD_GRAYSCALE);
 	t	= threshold(tmp, 127, cv.THRESH_BINARY);
 	dbg_printf(2, "Loaded template: %s\n", fname);
@@ -145,7 +145,7 @@ def get_template(name):
 def get_templates():
 	temp = dict();
 
-	for t in templates_names:
+	for t in t_base_names:
 		t_not		= t + "_not";
 		temp[t]		= get_template(t);
 		temp[t_not]	= get_template(t_not);
@@ -381,7 +381,7 @@ def match_t_inner(sym, temps):
 def decode_inner(code_main, code_in):
 	if (code_main == "bleach"):
 		return	None;
-	if (code_main == "dry_clean"):
+	if (code_main == "pro"):
 		if (code_in == "A"):
 			return	"any_solvent";
 		if (code_in == "F"):
@@ -390,14 +390,14 @@ def decode_inner(code_main, code_in):
 			return	"wet_clean";
 		if (code_in == "P"):
 			return	"any_solvent_except_TCE";
-	if (code_main == "iron") or (code_main == "tumble_dry"):
+	if (code_main == "iron") or (code_main == "dry"):
 		if (code_in == "1_dot"):
 			return	"low_temp";
 		if (code_in == "2_dot"):
 			return	"medium_temp";
 		if (code_in == "3_dot"):
 			return	"high_temp";
-	if (code_main == "machine_wash"):
+	if (code_main == "wash"):
 		if (code_in == "30") or (code_in == "1_dot"):
 			return	"30";
 		if (code_in == "40") or (code_in == "2_dot"):
@@ -512,7 +512,7 @@ def match_templates(img, temps):
 
 def find_details(img, code, temps):
 	full_code	= code;
-	for c in templates_names:
+	for c in t_base_names:
 		dbg_printf(2, "%s =? %s\n", c, code);
 		if c == code:
 			dbg_printf(1, "%s;", code);
@@ -530,16 +530,16 @@ def find_details(img, code, temps):
 def get_washing_instruction_id(instruction):
 	switcher = {
 		"hand_wash": 0,
-		"machine_wash": 1,
-		"machine_wash; delicate": 2,
-		"machine_wash; very_delicate": 3,
-		"machine_wash_not": 4,
-		"machine_wash; 30": 5,
-		"machine_wash; 40": 6,
-		"machine_wash; 50": 7,
-		"machine_wash; 60": 8,
-		"machine_wash; 70": 9,
-		"machine_wash; 95": 10,
+		"wash": 1,
+		"wash; delicate": 2,
+		"wash; very_delicate": 3,
+		"wash_not": 4,
+		"wash; 30": 5,
+		"wash; 40": 6,
+		"wash; 50": 7,
+		"wash; 60": 8,
+		"wash; 70": 9,
+		"wash; 95": 10,
 		"wiring_not": 11,
 		"wiring": 12,
 		"bleach": 13,
@@ -585,7 +585,7 @@ def get_washing_instruction_id(instruction):
 		"dry_clean; reduced_moisture": 53,
 		"dry_clean; no_steam": 54,
 		"dry_clean; low_heat": 55,
-		"machine_wash; 30; delicate": 100
+		"wash; 30; delicate": 100
 
 	}
 	return switcher.get(instruction, -1)
