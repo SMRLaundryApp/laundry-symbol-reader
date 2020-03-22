@@ -120,7 +120,7 @@ int	extract_symbols	(img_s *restrict img)
 	alx_cv_contours(tmp, conts);
 	if (alx_cv_extract_conts(conts, NULL, &nsyms))
 		goto err;
-	printf("--%i--\n", (int)nsyms);
+								dbg_printf(1, "--%i--\n", (int)nsyms);
 
 	/* Crop to symbols */
 	status--;
@@ -296,6 +296,42 @@ int	symbol_inner	(const img_s *restrict sym, img_s *restrict in)
 	status	= 0;
 err:	alx_cv_deinit_rect(rect);
 err1:	alx_cv_deinit_conts(conts);
+err0:	alx_cv_deinit_img(mask);
+	return	status;
+}
+
+int	symbol_outer	(const img_s *restrict sym, img_s *restrict out)
+{
+	img_s		*mask;
+	conts_s		*conts;
+	ptrdiff_t	i;
+	int		status;
+
+	/* init */
+	status	= -1;
+	if (alx_cv_init_img(&mask))
+		return	status;
+	if (alx_cv_init_conts(&conts))
+		goto err0;
+
+	/* Find base */
+	status--;
+	alx_cv_clone(out, sym);					dbg_show(2, out);
+	alx_cv_threshold(out, ALX_CV_THRESH_BINARY_INV, ALX_CV_THR_OTSU);
+								dbg_show(3, out);
+	alx_cv_holes_fill(out);					dbg_show(3, mask);
+	alx_cv_clone(mask, out);				dbg_show(3, mask);
+	alx_cv_contours(mask, conts);
+	if (alx_cv_conts_largest(NULL, &i, conts))
+		goto err;
+	alx_cv_contour_mask(mask, conts, i);			dbg_show(3, mask);
+	alx_cv_invert(mask);					dbg_show(3, mask);
+	alx_cv_and_2ref(out, mask);				dbg_show(2, out);
+
+
+	/* deinit */
+	status	= 0;
+err:	alx_cv_deinit_conts(conts);
 err0:	alx_cv_deinit_img(mask);
 	return	status;
 }

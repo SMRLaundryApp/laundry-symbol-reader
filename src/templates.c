@@ -11,10 +11,13 @@
 
 #include <math.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 
 #define ALX_NO_PREFIX
 #include <libalx/base/compiler/size.h>
+#include <libalx/base/stdint/mask/bit.h>
+#include <libalx/base/stdint/mask/field.h>
 #include <libalx/base/stdio/printf/sbprintf.h>
 #include <libalx/extra/cv/alx/compare.h>
 #include <libalx/extra/cv/alx/median.h>
@@ -39,6 +42,16 @@
 /******************************************************************************
  ******* macro ****************************************************************
  ******************************************************************************/
+#define CODE_BASE_POS	(1)
+#define CODE_BASE_LEN	(3)
+
+#define CODE_Y_N_POS	(CODE_BASE_POS + CODE_BASE_LEN)
+
+#define CODE_IN_POS	(CODE_Y_N_POS + 1)
+#define CODE_IN_LEN	(6)
+
+#define CODE_OUT_POS	(CODE_IN_POS + CODE_IN_LEN)
+#define CODE_OUT_LEN	(5)
 
 
 /******************************************************************************
@@ -51,27 +64,22 @@
  ******************************************************************************/
 const char *const	t_base_meaning[] = {
 	"bleach",
-	"professional clean",
-	"iron",
-	"wash",
 	"dry",
-
-	"bleach not",
-	"professional clean not",
-	"iron not",
-	"wash not",
-	"dry not"
+	"iron",
+	"professional clean",
+	"wash"
 };
 
 const char *const	t_base_fnames[] = {
 	"bleach",
-	"pro",
+	"dry",
 	"iron",
-	"wash",
-	"dry"
+	"pro",
+	"wash"
 };
-/*
+
 const char *const	t_inner_meaning[] = {
+	"",
 	"low temp",
 	"medium temp",
 	"high temp",
@@ -86,7 +94,7 @@ const char *const	t_inner_meaning[] = {
 	"wet clean",
 	"any solvent except TCE"
 };
-*/
+
 const char *const	t_inner_fnames[] = {
 	"1_dot",
 	"2_dot",
@@ -105,6 +113,12 @@ const char *const	t_inner_fnames[] = {
 	"W"
 };
 
+const char *const	t_outer_meaning[] = {
+	"",
+	"delicate",
+	"very delicate"
+};
+
 img_s	*base_templates[ARRAY_SIZE(t_base_fnames)];
 img_s	*base_templates_not[ARRAY_SIZE(t_base_fnames)];
 img_s	*inner_templates[ARRAY_SIZE(t_inner_fnames)];
@@ -114,9 +128,11 @@ img_s	*inner_templates[ARRAY_SIZE(t_inner_fnames)];
  ******* static prototypes ****************************************************
  ******************************************************************************/
 static
-int	load_t_base	(img_s *t, const char *fname);
+int	load_t_base		(img_s *t, const char *fname);
 static
-int	load_t_inner	(img_s *t, const char *fname);
+int	load_t_inner		(img_s *t, const char *fname);
+static
+void	t_inner_fix_code	(uint32_t *code);
 
 
 /******************************************************************************
@@ -192,12 +208,136 @@ int	load_templates	(void)
 	return	0;
 }
 
+int	match_t_base	(img_s *restrict sym, uint32_t *code)
+{
+	img_s		*base;
+	conts_s		*conts;
+	double		match, m;
+	int		status;
+
+	/* init */
+	status	= -1;
+	if (alx_cv_init_img(&base))
+		return	status;
+	if (alx_cv_init_conts(&conts))
+		goto err0;
+
+	/* Find base match */
+	status--;
+	if (symbol_base(sym, base))
+		goto err;					dbg_show(2, base);
+	status--;
+	match	= -INFINITY;
+	BITFIELD_SET(code, CODE_BASE_POS, CODE_BASE_LEN);
+	for (ptrdiff_t i = 0; i < ARRAY_SSIZE(base_templates); i++) {
+		m	= alx_cv_compare_bitwise(base, base_templates[i], 2);
+								dbg_printf(1, "match: %lf\n", m);
+		if (m >= match) {
+			BITFIELD_WRITE(code, CODE_BASE_POS, CODE_BASE_LEN, i);
+			BIT_SET(code, CODE_Y_N_POS);
+			match	= m;				dbg_show(2, base_templates[i]);
+		}
+		m	= alx_cv_compare_bitwise(base, base_templates_not[i], 2);
+								dbg_printf(2, "match: %lf\n", m);
+		if (m >= match) {
+			BITFIELD_WRITE(code, CODE_BASE_POS, CODE_BASE_LEN, i);
+			BIT_CLEAR(code, CODE_Y_N_POS);
+			match	= m;				dbg_show(2, base_templates_not[i]);
+		}
+	}
+
+	/* deinit */
+	status	= 0;
+err:	alx_cv_deinit_conts(conts);
+err0:	alx_cv_deinit_img(base);
+	return	status;
+}
+
+int	match_t_inner	(img_s *restrict sym, uint32_t *code)
+{
+	img_s		*in;
+	conts_s		*conts;
+	double		match, m;
+	int		status;
+
+	if (!BIT_READ(*code, CODE_Y_N_POS)) {
+		BITFIELD_CLEAR(code, CODE_IN_POS, CODE_IN_LEN);
+		return	1;
+	}
+
+	/* init */
+	status	= -1;
+	if (alx_cv_init_img(&in))
+		return	status;
+	if (alx_cv_init_conts(&conts))
+		goto err0;
+
+	/* Find inner match */
+	status--;
+	if (symbol_inner(sym, in))
+		goto err;					dbg_show(2, in);
+	status--;
+	match	= -INFINITY;
+	for (ptrdiff_t i = 0; i < ARRAY_SSIZE(inner_templates); i++) {
+		m	= alx_cv_compare_bitwise(in, inner_templates[i], 0);
+								dbg_printf(2, "match: %lf\n", m);
+		if (m >= match) {
+			BITFIELD_WRITE(code, CODE_IN_POS, CODE_IN_LEN, i);
+			match		= m;			dbg_show(2, inner_templates[i]);
+		}
+	}
+
+	t_inner_fix_code(code);
+
+	/* deinit */
+	status	= 0;
+err:	alx_cv_deinit_conts(conts);
+err0:	alx_cv_deinit_img(in);
+	return	status;
+}
+
+int	match_t_outer	(img_s *restrict sym, uint32_t *code)
+{
+	img_s		*out;
+	conts_s		*conts;
+	ptrdiff_t	n_lines;
+	int		status;
+
+	if (!BIT_READ(*code, CODE_Y_N_POS)) {
+		BITFIELD_CLEAR(code, CODE_OUT_POS, CODE_OUT_LEN);
+		return	1;
+	}
+
+	/* init */
+	status	= -1;
+	if (alx_cv_init_img(&out))
+		return	status;
+	if (alx_cv_init_conts(&conts))
+		goto err0;
+
+	/* Find inner match */
+	status--;
+	if (symbol_outer(sym, out))
+		goto err;					dbg_show(2, out);
+	status--;
+
+	alx_cv_contours(out, conts);
+	alx_cv_extract_conts(conts, NULL, &n_lines);
+	BITFIELD_WRITE(code, CODE_OUT_POS, CODE_OUT_LEN, n_lines);
+
+	/* deinit */
+	status	= 0;
+err:	alx_cv_deinit_conts(conts);
+err0:	alx_cv_deinit_img(out);
+	return	status;
+}
+
 
 /******************************************************************************
  ******* static function definitions ******************************************
  ******************************************************************************/
 static
-int	load_t_base	(img_s *t, const char *fname)
+int	load_t_base		(img_s *t, const char *fname)
 {
 	conts_s		*conts;
 	const cont_s	*cont;
@@ -232,7 +372,7 @@ err0:	alx_cv_deinit_conts(conts);
 }
 
 static
-int	load_t_inner	(img_s *t, const char *fname)
+int	load_t_inner		(img_s *t, const char *fname)
 {
 	img_s		*tmp;
 	conts_s		*conts;
@@ -272,88 +412,49 @@ err0:	alx_cv_deinit_img(tmp);
 	return	status;
 }
 
-int	match_t_base	(img_s *restrict sym, int *code)
+static
+void	t_inner_fix_code	(uint32_t *code)
 {
-	img_s		*base;
-	conts_s		*conts;
-	double		match, m;
-	int		status;
+	uint8_t	base_code;
+	uint8_t	in_code;
 
-	/* init */
-	status	= -1;
-	if (alx_cv_init_img(&base))
-		return	status;
-	if (alx_cv_init_conts(&conts))
-		goto err0;
-
-	/* Find base */
-	status--;
-	if (symbol_base(sym, base))
-		goto err;					dbg_show(2, base);
-	status--;
-	match	= -INFINITY;
-	*code	= -1;
-	for (ptrdiff_t i = 0; i < ARRAY_SSIZE(base_templates); i++) {
-		m	= alx_cv_compare_bitwise(base, base_templates[i], 2);
-		printf("match: %lf\n", m);
-		if (m >= match) {
-			*code	= i;
-			match	= m;				dbg_show(2, base_templates[i]);
+	base_code	= BITFIELD_READ(*code, CODE_BASE_POS, CODE_BASE_LEN);
+	in_code		= BITFIELD_READ(*code, CODE_IN_POS, CODE_IN_LEN);
+	switch (base_code) {
+	case T_BASE_BLEACH:
+	default:
+		BITFIELD_SET(code, CODE_IN_POS, CODE_IN_LEN);
+		break;
+	case T_BASE_PRO:
+		in_code	+= T_INNER_A - T_INNER_FNAME_A;
+		BITFIELD_WRITE(code, CODE_IN_POS, CODE_IN_LEN, in_code);
+		break;
+	case T_BASE_DRY:
+	case T_BASE_IRON:
+		in_code	+= T_INNER_LO_T - T_INNER_FNAME_1_DOT;
+		BITFIELD_WRITE(code, CODE_IN_POS, CODE_IN_LEN, in_code);
+		break;
+	case T_BASE_WASH:
+		switch (in_code) {
+		case T_INNER_FNAME_1_DOT ... T_INNER_FNAME_6_DOT:
+			in_code	+= T_INNER_30 - T_INNER_FNAME_1_DOT;
+			BITFIELD_WRITE(code, CODE_IN_POS, CODE_IN_LEN, in_code);
+			break;
+		case T_INNER_FNAME_30 ... T_INNER_FNAME_60:
+			in_code	+= T_INNER_30 - T_INNER_FNAME_30;
+			BITFIELD_WRITE(code, CODE_IN_POS, CODE_IN_LEN, in_code);
+			break;
+		case T_INNER_FNAME_95:
+			in_code	+= T_INNER_95 - T_INNER_FNAME_95;
+			BITFIELD_WRITE(code, CODE_IN_POS, CODE_IN_LEN, in_code);
+			break;
+		case T_INNER_FNAME_A ... T_INNER_FNAME_W:
+			in_code	+= T_INNER_A - T_INNER_FNAME_A;
+			BITFIELD_WRITE(code, CODE_IN_POS, CODE_IN_LEN, in_code);
+			break;
 		}
-		m	= alx_cv_compare_bitwise(base, base_templates_not[i], 2);
-		printf("match: %lf\n", m);
-		if (m >= match) {
-			*code	= i + T_BASE_NOT;
-			match	= m;				dbg_show(2, base_templates_not[i]);
-		}
+		break;
 	}
-
-	/* deinit */
-	status	= 0;
-err:	alx_cv_deinit_conts(conts);
-err0:	alx_cv_deinit_img(base);
-	return	status;
-}
-
-int	match_t_inner	(img_s *restrict sym, int base_code, int *in_code)
-{
-	img_s		*in;
-	conts_s		*conts;
-	double		match, m;
-	int		status;
-
-	if (base_code >= T_BASE_NOT) {
-		*in_code	= -1;
-		return	1;
-	}
-
-	/* init */
-	status	= -1;
-	if (alx_cv_init_img(&in))
-		return	status;
-	if (alx_cv_init_conts(&conts))
-		goto err0;
-
-	/* Find inner */
-	status--;
-	if (symbol_inner(sym, in))
-		goto err;					dbg_show(2, in);
-	status--;
-	match	= -INFINITY;
-	for (ptrdiff_t i = 0; i < ARRAY_SSIZE(inner_templates); i++) {
-		m	= alx_cv_compare_bitwise(in, inner_templates[i], 0);
-		printf("match: %lf\n", m);
-		if (m >= match) {
-			*in_code	= i;
-			match		= m;			dbg_show(2, inner_templates[i]);
-		}
-	}
-
-	/* deinit */
-	status	= 0;
-err:	alx_cv_deinit_conts(conts);
-err0:	alx_cv_deinit_img(in);
-	return	status;
 }
 
 

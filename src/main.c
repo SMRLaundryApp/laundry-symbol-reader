@@ -13,6 +13,7 @@
 
 #define ALX_NO_PREFIX
 #include <libalx/base/compiler/size.h>
+#include <libalx/base/stdio/printf/b.h>
 #include <libalx/extra/cv/core/img/img.h>
 #include <libalx/extra/cv/highgui/file.h>
 #include <libalx/extra/cv/highgui/window.h>
@@ -79,6 +80,7 @@ int	init	(img_s **restrict img)
 	if (init_templates())
 		goto err1;
 	alx_cv_named_window("dbg", ALX_CV_WINDOW_NORMAL);
+	printf_b_init();
 
 	return	0;
 
@@ -104,7 +106,7 @@ int	proc	(const char *fname)
 	clock_t		time_0;
 	clock_t		time_1;
 	double		time_tot;
-	int		code_base, code_in;
+	uint32_t	code;
 	int		status;
 
 	status	= -1;
@@ -135,17 +137,21 @@ int	proc	(const char *fname)
 		goto err;
 	status--;
 	for (ptrdiff_t i = 0; i < nsyms; i++) {
+		code	= 0;
 		if (clean_symbol(symbols[i]))
 			goto err;
-		if (match_t_base(symbols[i], &code_base))
+		if (match_t_base(symbols[i], &code))
 			goto err;
-		if (match_t_inner(symbols[i], code_base, &code_in) < 0)
+		if (match_t_inner(symbols[i], &code) < 0)
 			goto err;
+		if (match_t_outer(symbols[i], &code) < 0)
+			goto err;
+		printf("0b%'.16b\n", code);
 	}
 
 	time_1 = clock();
 	time_tot = ((double) time_1 - time_0) / CLOCKS_PER_SEC;
-	printf("Total time:	%5.3lf s;\n", time_tot);
+	dbg_printf(1, "Total time:	%5.3lf s;\n", time_tot);
 
 	alx_cv_imwrite(img, "wash.png");
 

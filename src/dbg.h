@@ -24,8 +24,8 @@
 /******************************************************************************
  ******* macro ****************************************************************
  ******************************************************************************/
-#define DBG			03
-#define DBG_SHOW_WAIT		01
+#define DBG			0
+#define DBG_SHOW_WAIT		0
 #define DBG_SHOWTIME(dbg)	(					\
 {									\
 	int	tm_;							\
@@ -55,13 +55,21 @@
 }									\
 )
 
-#ifdef DBG
+#if defined(DBG)
 #define dbg_show(dbg, img)		do				\
 {									\
 									\
 	if (dbg <= DBG) {						\
 		perrorx(NULL);						\
 		alx_cv_imshow(img, "dbg", DBG_SHOWTIME(dbg));		\
+	}								\
+} while (0);
+
+#define dbg_printf(dbg, fmt, ...)	do				\
+{									\
+									\
+	if (dbg <= DBG) {						\
+		printf(fmt, ##__VA_ARGS__);				\
 	}								\
 } while (0);
 
@@ -74,7 +82,7 @@
 #else
 #define dbg_show(dbg, img)	do {} while (0);
 #define dbg_update_win()	do {} while (0);
-#endif
+#endif	/* defined(DBG) */
 
 #define MAX_SYMBOLS	(6)
 

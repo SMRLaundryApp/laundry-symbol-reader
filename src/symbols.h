@@ -49,6 +49,7 @@ int	extract_symbols	(img_s *restrict img);
 int	clean_symbol	(img_s *sym);
 int	symbol_base	(const img_s *restrict sym, img_s *restrict base);
 int	symbol_inner	(const img_s *restrict sym, img_s *restrict in);
+int	symbol_outer	(const img_s *restrict sym, img_s *restrict out);
 
 
 /******************************************************************************

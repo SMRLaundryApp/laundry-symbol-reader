@@ -5,7 +5,7 @@ BUILD_DIR	= $(CURDIR)/build
 SRC_DIR		= $(CURDIR)/src
 
 CFLAGS_STD	= -std=gnu17
-CFLAGS_W	= -Wall -Wextra -Werror
+CFLAGS_W	= -Wall -Wextra -Wno-format -Werror
 CFLAGS_O	= -O3 -march=native -flto -fuse-linker-plugin
 CFLAGS_PKG	= `pkg-config --cflags libalx-base`
 CFLAGS_PKG	+= `pkg-config --cflags libalx-cv`

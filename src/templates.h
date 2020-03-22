@@ -13,6 +13,8 @@
 /******************************************************************************
  ******* headers **************************************************************
  ******************************************************************************/
+#include <stdint.h>
+
 #include <libalx/base/compiler/size.h>
 #include <libalx/extra/cv/types.h>
 
@@ -31,17 +33,16 @@
  ******************************************************************************/
 enum	T_Base_Fname {
 	T_BASE_BLEACH,
-	T_BASE_PRO,
-	T_BASE_IRON,
-	T_BASE_WASH,
 	T_BASE_DRY,
+	T_BASE_IRON,
+	T_BASE_PRO,
+	T_BASE_WASH,
 
-	T_BASE_QTY,
-
-	T_BASE_NOT	= T_BASE_QTY
+	T_BASE_QTY
 };
 
 enum	T_Inner_Meaning {
+	T_INNER_EMPTY,
 	T_INNER_LO_T,
 	T_INNER_MED_T,
 	T_INNER_HI_T,
@@ -79,6 +80,14 @@ enum	T_Inner_Fname {
 	T_INNER_QTY
 };
 
+enum	T_Outer_Meaning {
+	T_OUTER_EMPTY,
+	T_OUTER_DELICATE,
+	T_OUTER_VERY_DELICATE,
+
+	T_OUTER_MEANING_QTY
+};
+
 
 /******************************************************************************
  ******* struct / union *******************************************************
@@ -107,8 +116,9 @@ extern	img_s	*inner_templates[ARRAY_SIZE(t_inner_fnames)];
 int	init_templates	(void);
 void	deinit_templates(void);
 int	load_templates	(void);
-int	match_t_base	(img_s *restrict sym, int *code);
-int	match_t_inner	(img_s *restrict sym, int base_code, int *in_code);
+int	match_t_base	(img_s *restrict sym, uint32_t *code);
+int	match_t_inner	(img_s *restrict sym, uint32_t *code);
+int	match_t_outer	(img_s *restrict sym, uint32_t *code);
 
 
 /******************************************************************************
