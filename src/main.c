@@ -153,7 +153,7 @@ int	proc	(const char *fname)
 	time_tot = ((double) time_1 - time_0) / CLOCKS_PER_SEC;
 	dbg_printf(1, "Total time:	%5.3lf s;\n", time_tot);
 
-	alx_cv_imwrite(img, "wash.png");
+	alx_cv_imwrite(img, "/tmp/wash.png");
 
 	status	= 0;
 err:	deinit(img);
