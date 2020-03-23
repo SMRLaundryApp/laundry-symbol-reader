@@ -42,11 +42,12 @@ RUN	apt-get update							&& \
 	apt-get clean
 WORKDIR	/tmp
 COPY	--from=build /tmp/libalx ./libalx
-RUN	make	install-base install-cv		-C libalx	-j 8
-WORKDIR	/app
-COPY	--from=build /tmp/laundry-symbol-reader ./
-RUN	chmod +x ./laundry-symbol-reader
-CMD	["./laundry-symbol-reader"]
+RUN	make	install-base install-cv		-C libalx	-j 8	&& \
+	rm -rf	libalx
+COPY	--from=build /tmp/laundry-symbol-reader ./laundry-symbol-reader
+RUN	make	install		-C laundry-symbol-reader	-j 8	&& \
+	rm -rf	laundry-symbol-reader
+CMD	["laundry-symbol-reader"]
 
-# docker container run --tty --interactive --rm --name wash laundrysymbolreader/reader  
+# docker container run --user $(id -u):$(id -g) --tty --interactive --rm --volume $PWD:$PWD --env IMG_FNAME=2.jpeg --name wash laundrysymbolreader/reader  
 
