@@ -5,15 +5,29 @@
 # Beautify output
 Q	= @
 
+export	Q
+
+################################################################################
+# Do not print "Entering directory ..."
+MAKEFLAGS += --no-print-directory
+
 ################################################################################
 # directories
 
+MAIN_DIR	= $(CURDIR)
+
 SRC_DIR		= $(CURDIR)/src
 SHARE_DIR	= $(CURDIR)/share
+MK_DIR		= $(CURDIR)/mk
 BUILD_DIR	= $(CURDIR)/build
 
 INSTALL_BIN_DIR		= /usr/local/bin
 INSTALL_SHARE_DIR	= /usr/local/share
+
+export	MAIN_DIR
+export	SRC_DIR
+export	MK_DIR
+export	BUILD_DIR
 
 ################################################################################
 # Make variables (CC, etc...)
@@ -62,23 +76,8 @@ DEP	= $(OBJ:.o=.d)
 .PHONY: all
 all: $(BUILD_DIR)/laundry-symbol-reader
 
-$(BUILD_DIR)/%.d: $(SRC_DIR)/%.c
-	$(Q)mkdir -p		$(@D)/
-	@echo	"	CC -M	$*.d"
-	$(Q)$(CC) $(CFLAGS) -MG -MT"$@" -MT"$(BUILD_DIR)/$*.s" -M $< -MF $@
-$(BUILD_DIR)/%.s: $(SRC_DIR)/%.c $(BUILD_DIR)/%.d
-	$(Q)mkdir -p		$(@D)/
-	@echo	"	CC	$*.s"
-	$(Q)$(CC) $(CFLAGS) -S $< -o $@
-$(BUILD_DIR)/%.o: $(BUILD_DIR)/%.s
-	@echo	"	AS	$*.o"
-	$(Q)$(AS) $< -o $@
-
-$(BUILD_DIR)/laundry-symbol-reader: $(OBJ)
-	@echo	"	CC	$*"
-	$(Q)gcc $(CFLAGS) $^ -o $@ $(LIBS)
-
-include $(DEP)
+$(BUILD_DIR)/laundry-symbol-reader:
+	$(Q)$(MAKE)	-C $(MK_DIR)
 
 ################################################################################
 # install
