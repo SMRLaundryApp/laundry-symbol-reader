@@ -128,7 +128,8 @@ int	init	(char fname[static restrict FILENAME_MAX],
 		goto err0;
 	if (init_templates())
 		goto err1;
-	alx_cv_named_window("dbg", ALX_CV_WINDOW_NORMAL);
+	if (DBG)
+		alx_cv_named_window("dbg", ALX_CV_WINDOW_NORMAL);
 	printf_b_init();
 
 	return	0;
@@ -142,7 +143,8 @@ static
 void	deinit	(img_s *restrict img)
 {
 
-	alx_cv_destroy_all_windows();
+	if (DBG)
+		alx_cv_destroy_all_windows();
 	deinit_templates();
 	deinit_symbols();
 	alx_cv_deinit_img(img);
