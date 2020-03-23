@@ -35,7 +35,7 @@ SRC	=								\
 DEP	= $(OBJ:.o=.d)
 
 .PHONY: all
-all: wash
+all: laundry-symbol-reader
 
 $(BUILD_DIR)/%.d: $(SRC_DIR)/%.c
 	$(Q)mkdir -p		$(@D)/
@@ -49,7 +49,7 @@ $(BUILD_DIR)/%.o: $(BUILD_DIR)/%.s
 	@echo	"	AS	$*.o"
 	$(Q)$(AS) $< -o $@
 
-wash: $(OBJ)
+laundry-symbol-reader: $(OBJ)
 	@echo	"	CC	$@"
 	$(Q)gcc $(CFLAGS) $^ -o $@ $(LIBS)
 
