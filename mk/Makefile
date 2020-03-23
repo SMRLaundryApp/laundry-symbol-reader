@@ -22,8 +22,13 @@ DEP	= $(OBJ:.o=.d)
 #	action
 
 PHONY := all
-all: $(OBJ)
+all: $(BUILD_DIR)/laundry-symbol-reader
 	@:
+
+$(BUILD_DIR)/laundry-symbol-reader: $(OBJ)
+	@echo	"	CC	$(@F)"
+	$(Q)$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
+
 
 
 $(BUILD_DIR)/%.d: $(SRC_DIR)/%.c $(MK_DEPS)
@@ -31,7 +36,6 @@ $(BUILD_DIR)/%.d: $(SRC_DIR)/%.c $(MK_DEPS)
 	@echo	"	CC -M	$*.d"
 	$(Q)$(CC) $(CFLAGS) -MG -MT"$@" -MT"$(BUILD_DIR)/$*.s" -M $< -MF $@
 $(BUILD_DIR)/%.s: $(SRC_DIR)/%.c $(BUILD_DIR)/%.d
-	$(Q)mkdir -p		$(@D)/
 	@echo	"	CC	$*.s"
 	$(Q)$(CC) $(CFLAGS) -S $< -o $@
 $(BUILD_DIR)/%.o: $(BUILD_DIR)/%.s

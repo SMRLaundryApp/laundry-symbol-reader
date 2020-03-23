@@ -35,6 +35,10 @@ export	BUILD_DIR
   AS	= as
   SZ	= size
 
+export	CC
+export	AS
+export	SZ
+
 ################################################################################
 # cflags
 CFLAGS_STD	= -std=gnu17
@@ -44,6 +48,8 @@ CFLAGS_PKG	= `pkg-config --cflags libalx-base`
 CFLAGS_PKG	+= `pkg-config --cflags libalx-cv`
 CFLAGS		= $(CFLAGS_W) $(CFLAGS_O) $(CFLAGS_PKG)
 
+export	CFLAGS
+
 ################################################################################
 # libs
 LIBS	= -flto
@@ -51,32 +57,12 @@ LIBS  	+= -fuse-linker-plugin
 LIBS    += `pkg-config --libs libalx-cv`
 LIBS	+= `pkg-config --libs libalx-base`
 
-
-
-
-################################################################################
-# dependencies
-
-OBJ	=								\
-	$(BUILD_DIR)/label.o						\
-	$(BUILD_DIR)/symbols.o						\
-	$(BUILD_DIR)/templates.o					\
-	$(BUILD_DIR)/main.o
-
-SRC	=								\
-	$(SRC_DIR)/label.c						\
-	$(SRC_DIR)/symbols.c						\
-	$(SRC_DIR)/templates.c						\
-	$(SRC_DIR)/main.c
-
-DEP	= $(OBJ:.o=.d)
+export	LIBS
 
 ################################################################################
 # compile
 .PHONY: all
-all: $(BUILD_DIR)/laundry-symbol-reader
-
-$(BUILD_DIR)/laundry-symbol-reader:
+all:
 	$(Q)$(MAKE)	-C $(MK_DIR)
 
 ################################################################################
