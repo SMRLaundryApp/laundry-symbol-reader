@@ -86,14 +86,6 @@
 #define dbg_update_win()	do {} while (0);
 #endif	/* defined(DBG) */
 
-#define MAX_SYMBOLS	(6)
-
-
-#define TEMPLATES_DIR	"templates/"
-#define T_BASE_DIR	TEMPLATES_DIR "base/"
-#define T_INNER_DIR	TEMPLATES_DIR "inner/"
-#define TEMPLATES_EXT	"png"
-
 
 /******************************************************************************
  ******* enum *****************************************************************

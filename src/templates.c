@@ -42,14 +42,16 @@
 /******************************************************************************
  ******* macro ****************************************************************
  ******************************************************************************/
+#define TEMPLATES_DIR	"/usr/local/share/laundry-symbol-reader/templates/"
+#define T_BASE_DIR	TEMPLATES_DIR "base/"
+#define T_INNER_DIR	TEMPLATES_DIR "inner/"
+#define TEMPLATES_EXT	"png"
+
 #define CODE_BASE_POS	(1)
 #define CODE_BASE_LEN	(3)
-
 #define CODE_Y_N_POS	(CODE_BASE_POS + CODE_BASE_LEN)
-
 #define CODE_IN_POS	(CODE_Y_N_POS + 1)
 #define CODE_IN_LEN	(6)
-
 #define CODE_OUT_POS	(CODE_IN_POS + CODE_IN_LEN)
 #define CODE_OUT_LEN	(5)
 
