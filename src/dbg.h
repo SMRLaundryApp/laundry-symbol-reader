@@ -76,8 +76,10 @@
 #define dbg_update_win()		do				\
 {									\
 									\
-	alx_cv_destroy_all_windows();					\
-	alx_cv_named_window("dbg", ALX_CV_WINDOW_NORMAL);		\
+	if (DBG) {							\
+		alx_cv_destroy_all_windows();				\
+		alx_cv_named_window("dbg", ALX_CV_WINDOW_NORMAL);	\
+	}								\
 } while (0);
 #else
 #define dbg_show(dbg, img)	do {} while (0);
