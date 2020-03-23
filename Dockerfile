@@ -21,7 +21,7 @@ RUN	git clone https://github.com/alejandro-colomar/libalx.git	&& \
 	make	base cv				-C libalx	-j 8	&& \
 	make	install-base install-cv		-C libalx	-j 8
 RUN	git clone https://github.com/SMRLaundryApp/laundry-symbol-reader.git  && \
-	make	-j 2
+	make			-C laundry-symbol-reader	-j 2
 
 FROM	debian:testing
 RUN	apt-get update							&& \
