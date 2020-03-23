@@ -14,6 +14,7 @@
 #define ALX_NO_PREFIX
 #include <libalx/base/compiler/size.h>
 #include <libalx/base/stdio/printf/b.h>
+#include <libalx/base/stdlib/getenv/getenv_s.h>
 #include <libalx/extra/cv/core/img/img.h>
 #include <libalx/extra/cv/highgui/file.h>
 #include <libalx/extra/cv/highgui/window.h>
@@ -28,6 +29,7 @@
 /******************************************************************************
  ******* macro ****************************************************************
  ******************************************************************************/
+#define ENV_IMG_FNAME		"IMG_FNAME"
 
 
 /******************************************************************************
@@ -39,69 +41,18 @@
  ******* static functions (prototypes) ****************************************
  ******************************************************************************/
 static
-int	init	(img_s **restrict img);
+int	init	(char fname[static restrict FILENAME_MAX],
+		 img_s **restrict img);
 static
 void	deinit	(img_s *restrict img);
-static
-int	proc	(const char *fname);
 
 
 /******************************************************************************
  ******* main *****************************************************************
  ******************************************************************************/
-int	main	(int argc, char *argv[])
+int	main	(void)
 {
-	const char	*fname;
-	int		status;
-
-	if (argc != 2)
-		return	1;
-
-	fname	= argv[1];
-	status	= -proc(fname);
-	if (status)
-		return	status;
-
-	return	0;
-}
-
-
-/******************************************************************************
- ******* static functions (definitions) ***************************************
- ******************************************************************************/
-static
-int	init	(img_s **restrict img)
-{
-
-	if (alx_cv_init_img(img))
-		return	-1;
-	if (init_symbols())
-		goto err0;
-	if (init_templates())
-		goto err1;
-	alx_cv_named_window("dbg", ALX_CV_WINDOW_NORMAL);
-	printf_b_init();
-
-	return	0;
-
-err1:	deinit_symbols();
-err0:	alx_cv_deinit_img(*img);
-	return	-1;
-}
-
-static
-void	deinit	(img_s *restrict img)
-{
-
-	alx_cv_destroy_all_windows();
-	deinit_templates();
-	deinit_symbols();
-	alx_cv_deinit_img(img);
-}
-
-static
-int	proc	(const char *fname)
-{
+	char		fname[FILENAME_MAX];
 	img_s		*img;
 	clock_t		time_0;
 	clock_t		time_1;
@@ -109,33 +60,33 @@ int	proc	(const char *fname)
 	uint32_t	code;
 	int		status;
 
-	status	= -1;
-	if (init(&img))
-		return	-1;
+	status	= 1;
+	if (init(fname, &img))
+		return	1;
 	time_0 = clock();
 
-	status--;
+	status++;
 	if (load_templates())
 		goto err;
-	status--;
+	status++;
 	if (alx_cv_imread(img, fname))
 		goto err;
-	status--;
+	status++;
 	if (find_label(img))
 		goto err;
-	status--;
+	status++;
 	if (find_symbols_vertically(img))
 		goto err;
-	status--;
+	status++;
 	if (find_symbols_horizontally(img))
 		goto err;
-	status--;
+	status++;
 	if (align_symbols(img))
 		goto err;
-	status--;
+	status++;
 	if (extract_symbols(img))
 		goto err;
-	status--;
+	status++;
 	for (ptrdiff_t i = 0; i < nsyms; i++) {
 		code	= 0;
 		if (clean_symbol(symbols[i]))
@@ -158,6 +109,43 @@ int	proc	(const char *fname)
 	status	= 0;
 err:	deinit(img);
 	return	status;
+}
+
+
+/******************************************************************************
+ ******* static functions (definitions) ***************************************
+ ******************************************************************************/
+static
+int	init	(char fname[static restrict FILENAME_MAX],
+		 img_s **restrict img)
+{
+
+	if (getenv_s(fname, FILENAME_MAX, ENV_IMG_FNAME))
+		return	-1;
+	if (alx_cv_init_img(img))
+		return	-2;
+	if (init_symbols())
+		goto err0;
+	if (init_templates())
+		goto err1;
+	alx_cv_named_window("dbg", ALX_CV_WINDOW_NORMAL);
+	printf_b_init();
+
+	return	0;
+
+err1:	deinit_symbols();
+err0:	alx_cv_deinit_img(*img);
+	return	-2;
+}
+
+static
+void	deinit	(img_s *restrict img)
+{
+
+	alx_cv_destroy_all_windows();
+	deinit_templates();
+	deinit_symbols();
+	alx_cv_deinit_img(img);
 }
 
 
