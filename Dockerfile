@@ -19,7 +19,7 @@ RUN	apt-get update							&& \
 WORKDIR	/tmp
 RUN	git clone https://github.com/alejandro-colomar/libalx.git	&& \
 	make	base cv				-C libalx	-j 8	&& \
-	make	install_base install_cv		-C libalx	-j 8
+	make	install-base install-cv		-C libalx	-j 8
 RUN	git clone https://github.com/SMRLaundryApp/laundry-symbol-reader.git  && \
 	make	-j 2
 
@@ -42,7 +42,7 @@ RUN	apt-get update							&& \
 	apt-get clean
 WORKDIR	/tmp
 COPY	--from=build /tmp/libalx ./libalx
-RUN	make	install_base install_cv		-C libalx	-j 8
+RUN	make	install-base install-cv		-C libalx	-j 8
 WORKDIR	/app
 COPY	--from=build /tmp/laundry-symbol-reader ./
 RUN	chmod +x ./laundry-symbol-reader
