@@ -67,19 +67,19 @@
  ******* variables ************************************************************
  ******************************************************************************/
 const char *const	t_base_meaning[] = {
+	"wash",
 	"bleach",
 	"dry",
 	"iron",
-	"professional clean",
-	"wash"
+	"professional clean"
 };
 
 const char *const	t_base_fnames[] = {
+	"wash",
 	"bleach",
 	"dry",
 	"iron",
-	"pro",
-	"wash"
+	"pro"
 };
 
 const char *const	t_inner_meaning[] = {
@@ -212,7 +212,7 @@ int	load_templates	(void)
 	return	0;
 }
 
-int	match_t_base	(img_s *restrict sym, uint32_t *code)
+int	match_t_base	(img_s *restrict sym, uint32_t *code, ptrdiff_t i)
 {
 	img_s		*base;
 	img_s		*tmp;
@@ -236,30 +236,27 @@ int	match_t_base	(img_s *restrict sym, uint32_t *code)
 	status--;
 	match	= -INFINITY;
 	BITFIELD_SET(code, CODE_BASE_POS, CODE_BASE_LEN);
-	for (ptrdiff_t i = 0; i < ARRAY_SSIZE(base_templates); i++) {
-		alx_cv_clone(tmp, base);
-		alx_cv_resize_2largest(tmp, base_templates[i]);
-		alx_cv_xor_2ref(tmp, base_templates[i]);	dbg_show(2, tmp);
-		m	= alx_cv_compare_bitwise(base, base_templates[i], 2);
-								dbg_printf(1, "match: %lf\n", m);
-		if (m >= match) {
-								dbg_printf(1, "	%s\n", t_base_meaning[i]);
-			BITFIELD_WRITE(code, CODE_BASE_POS, CODE_BASE_LEN, i);
-			BIT_SET(code, CODE_Y_N_POS);
-			match	= m;				dbg_show(2, base_templates[i]);
-		}
 
-		alx_cv_clone(tmp, base);
-		alx_cv_resize_2largest(tmp, base_templates_not[i]);
-		alx_cv_xor_2ref(tmp, base_templates_not[i]);	dbg_show(2, tmp);
-		m	= alx_cv_compare_bitwise(base, base_templates_not[i], 2);
-								dbg_printf(2, "match: %lf\n", m);
-		if (m >= match) {
+	alx_cv_clone(tmp, base);
+	alx_cv_resize_2largest(tmp, base_templates[i]);
+	alx_cv_xor_2ref(tmp, base_templates[i]);		dbg_show(2, tmp);
+	m = alx_cv_compare_bitwise(base, base_templates[i], 2);	dbg_printf(1, "match: %lf\n", m);
+	if (m >= match) {
+								dbg_printf(1, "	%s\n", t_base_meaning[i]);
+		BITFIELD_WRITE(code, CODE_BASE_POS, CODE_BASE_LEN, i);
+		BIT_SET(code, CODE_Y_N_POS);
+		match	= m;					dbg_show(2, base_templates[i]);
+	}
+
+	alx_cv_clone(tmp, base);
+	alx_cv_resize_2largest(tmp, base_templates_not[i]);
+	alx_cv_xor_2ref(tmp, base_templates_not[i]);		dbg_show(2, tmp);
+	m = alx_cv_compare_bitwise(base, base_templates_not[i], 2);	dbg_printf(2, "match: %lf\n", m);
+	if (m >= match) {
 								dbg_printf(1, "	%s not\n", t_base_meaning[i]);
-			BITFIELD_WRITE(code, CODE_BASE_POS, CODE_BASE_LEN, i);
-			BIT_CLEAR(code, CODE_Y_N_POS);
-			match	= m;				dbg_show(2, base_templates_not[i]);
-		}
+		BITFIELD_WRITE(code, CODE_BASE_POS, CODE_BASE_LEN, i);
+		BIT_CLEAR(code, CODE_Y_N_POS);
+		match	= m;					dbg_show(2, base_templates_not[i]);
 	}
 								dbg_printf(2, "\n");
 

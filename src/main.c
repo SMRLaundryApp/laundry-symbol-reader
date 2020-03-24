@@ -91,7 +91,7 @@ int	main	(void)
 		code	= 0;
 		if (clean_symbol(symbols[i]))
 			goto err;
-		if (match_t_base(symbols[i], &code))
+		if (match_t_base(symbols[i], &code, i))
 			goto err;
 		if (match_t_inner(symbols[i], &code) < 0)
 			goto err;
