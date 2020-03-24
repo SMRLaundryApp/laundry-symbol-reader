@@ -28,11 +28,11 @@
  ******* enum *****************************************************************
  ******************************************************************************/
 enum	T_Base_Fname {
+	T_BASE_WASH,
 	T_BASE_BLEACH,
 	T_BASE_DRY,
 	T_BASE_IRON,
 	T_BASE_PRO,
-	T_BASE_WASH,
 
 	T_BASE_QTY
 };
@@ -112,7 +112,7 @@ extern	img_s	*inner_templates[ARRAY_SIZE(t_inner_fnames)];
 int	init_templates	(void);
 void	deinit_templates(void);
 int	load_templates	(void);
-int	match_t_base	(img_s *restrict sym, uint32_t *code);
+int	match_t_base	(img_s *restrict sym, uint32_t *code, ptrdiff_t i);
 int	match_t_inner	(img_s *restrict sym, uint32_t *code);
 int	match_t_outer	(img_s *restrict sym, uint32_t *code);
 

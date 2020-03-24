@@ -49,5 +49,5 @@ RUN	make	install		-C laundry-symbol-reader	-j 8	&& \
 	rm -rf	laundry-symbol-reader
 CMD	["laundry-symbol-reader"]
 
-# docker container run --user $(id -u):$(id -g) --tty --interactive --rm --volume $PWD:$PWD --workdir $PWD --env IMG_FNAME=2.jpeg laundrysymbolreader/reader  
+# docker container run --tty --interactive --volume $PWD:$PWD --env IMG_FNAME=$PWD/2.jpeg laundrysymbolreader/reader   
 
