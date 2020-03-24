@@ -24,7 +24,7 @@
 #include <libalx/extra/cv/core/array/bitwise.h>
 #include <libalx/extra/cv/core/array/component.h>
 #include <libalx/extra/cv/core/array/normalize.h>
-#include <libalx/extra/cv/core/contours/contours.h>
+#include <libalx/extra/cv/core/contours/init.h>
 #include <libalx/extra/cv/core/img/img.h>
 #include <libalx/extra/cv/core/rect/rect.h>
 #include <libalx/extra/cv/core/roi/roi.h>
@@ -34,7 +34,7 @@
 #include <libalx/extra/cv/imgproc/geometric/rotate.h>
 #include <libalx/extra/cv/imgproc/miscellaneous/fill.h>
 #include <libalx/extra/cv/imgproc/miscellaneous/threshold.h>
-#include <libalx/extra/cv/imgproc/shape/contours.h>
+#include <libalx/extra/cv/imgproc/shape/contour/contours.h>
 #include <libalx/extra/cv/imgproc/shape/rect.h>
 #include <libalx/extra/cv/types.h>
 
@@ -85,7 +85,7 @@ int	find_label			(img_s *img)
 	alx_cv_white_mask(tmp, 50, 60, 40);			dbg_show(3, tmp);
 	alx_cv_dilate_erode(tmp, 10);				dbg_show(3, tmp);
 	alx_cv_erode_dilate(tmp, 30);				dbg_show(3, tmp);
-	alx_cv_contours(tmp, conts);				dbg_show(2, tmp);
+	alx_cv_contours(tmp, conts);
 	if (alx_cv_conts_largest(&lbl, NULL, conts))
 		goto err;
 	alx_cv_min_area_rect(rect_rot, lbl);
@@ -155,7 +155,7 @@ int	find_symbols_vertically		(img_s *img)
 	alx_cv_erode_dilate(tmp, 15);				dbg_show(3, tmp);
 	alx_cv_extract_imgdata(tmp, NULL, &w, NULL, NULL, NULL, NULL);
 	alx_cv_dilate_h(tmp, w / 6);				dbg_show(3, tmp);
-	alx_cv_contours(tmp, conts);				dbg_show(2, tmp);
+	alx_cv_contours(tmp, conts);
 	if (alx_cv_conts_largest(&syms, NULL, conts))
 		goto err; 
 	alx_cv_bounding_rect(rect, syms);
@@ -210,7 +210,7 @@ int	find_symbols_horizontally	(img_s *img)
 								dbg_show(3, tmp);
 	alx_cv_dilate_h(tmp, w / 40);				dbg_show(3, tmp);
 	alx_cv_dilate_v(tmp, h / 40);				dbg_show(3, tmp);
-	alx_cv_contours(tmp, conts);				dbg_show(2, tmp);
+	alx_cv_contours(tmp, conts);
 	if (alx_cv_conts_largest(&syms, NULL, conts))
 		goto err;
 	alx_cv_bounding_rect(rect, syms);
@@ -262,7 +262,7 @@ int	align_symbols			(img_s *img)
 								dbg_show(3, tmp);
 	alx_cv_dilate_h(tmp, w / 40);				dbg_show(3, tmp);
 	alx_cv_dilate_v(tmp, h / 40);				dbg_show(3, tmp);
-	alx_cv_contours(tmp, conts);				dbg_show(2, tmp);
+	alx_cv_contours(tmp, conts);
 	if (alx_cv_conts_largest(&syms, NULL, conts))
 		goto err;
 	alx_cv_min_area_rect(rect_rot, syms);

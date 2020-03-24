@@ -20,7 +20,8 @@
 #include <libalx/extra/cv/core/array/bitwise.h>
 #include <libalx/extra/cv/core/array/normalize.h>
 #include <libalx/extra/cv/core/img/img.h>
-#include <libalx/extra/cv/core/contours/contours.h>
+#include <libalx/extra/cv/core/contours/extract.h>
+#include <libalx/extra/cv/core/contours/init.h>
 #include <libalx/extra/cv/core/rect/rect.h>
 #include <libalx/extra/cv/core/roi/roi.h>
 #include <libalx/extra/cv/imgproc/features/edges.h>
@@ -28,7 +29,8 @@
 #include <libalx/extra/cv/imgproc/filter/smooth.h>
 #include <libalx/extra/cv/imgproc/miscellaneous/fill.h>
 #include <libalx/extra/cv/imgproc/miscellaneous/threshold.h>
-#include <libalx/extra/cv/imgproc/shape/contours.h>
+#include <libalx/extra/cv/imgproc/shape/contour/contours.h>
+#include <libalx/extra/cv/imgproc/shape/contour/sort.h>
 #include <libalx/extra/cv/imgproc/shape/rect.h>
 #include <libalx/extra/cv/types.h>
 
@@ -39,7 +41,7 @@
 /******************************************************************************
  ******* macro ****************************************************************
  ******************************************************************************/
-#define MAX_SYMBOLS	(6)
+#define MAX_SYMBOLS	(5)
 
 
 /******************************************************************************
@@ -111,13 +113,12 @@ int	extract_symbols	(img_s *restrict img)
 	alx_cv_clone(tmp, img);					dbg_show(2, tmp);
 	alx_cv_normalize(tmp);					dbg_show(3, tmp);
 	alx_cv_smooth(tmp, ALX_CV_SMOOTH_MEDIAN, 3);		dbg_show(3, tmp);
-	alx_cv_canny(tmp, 127, 200, 3, false);			dbg_show(3, tmp);
-//	alx_cv_threshold(tmp, ALX_CV_THRESH_BINARY_INV, 80);	dbg_show(3, tmp);
-	alx_cv_dilate(tmp, 1);					dbg_show(3, tmp);
-//	alx_cv_dilate_erode(tmp, 8);				dbg_show(3, tmp);
+	alx_cv_adaptive_thr(tmp, ALX_CV_ADAPTIVE_THRESH_GAUSSIAN,
+			ALX_CV_THRESH_BINARY_INV, 99, 5);	dbg_show(3, tmp);
 	alx_cv_holes_fill(tmp);					dbg_show(3, tmp);
-	alx_cv_erode_dilate(tmp, 12);				dbg_show(2, tmp);
+	alx_cv_erode_dilate(tmp, 5);				dbg_show(2, tmp);
 	alx_cv_contours(tmp, conts);
+	alx_cv_sort_conts_lr(conts);
 	if (alx_cv_extract_conts(conts, NULL, &nsyms))
 		goto err;
 								dbg_printf(1, "--%i--\n", (int)nsyms);
@@ -239,7 +240,7 @@ int	symbol_base	(const img_s *restrict sym, img_s *restrict base)
 	alx_cv_threshold(base, ALX_CV_THRESH_BINARY_INV, ALX_CV_THR_OTSU);
 								dbg_show(3, base);
 	alx_cv_clone(mask, base);				dbg_show(3, mask);
-	alx_cv_dilate(mask, 1);					dbg_show(3, mask);
+	alx_cv_dilate_erode(mask, 1);					dbg_show(3, mask);
 	alx_cv_contours(mask, conts);
 	if (alx_cv_conts_largest(&cont, &i, conts))
 		goto err;
@@ -284,12 +285,14 @@ int	symbol_inner	(const img_s *restrict sym, img_s *restrict in)
 	alx_cv_holes_mask(mask);				dbg_show(3, mask);
 	alx_cv_holes_fill(mask);				dbg_show(3, mask);
 	alx_cv_and_2ref(in, mask);				dbg_show(3, in);
-	alx_cv_holes_fill(in);					dbg_show(3, in);
-	alx_cv_contours(in, conts);
+	alx_cv_clone(mask, in);					dbg_show(3, mask);
+	alx_cv_dilate_erode(mask, 10);				dbg_show(3, mask);
+	alx_cv_contours(mask, conts);
 	if (alx_cv_conts_largest(&cont, NULL, conts))
 		goto err;
 	alx_cv_bounding_rect(rect, cont);
-	alx_cv_roi_set(in, rect);				dbg_show(2, in);
+	alx_cv_roi_set(in, rect);				dbg_show(3, in);
+	alx_cv_holes_fill(in);					dbg_show(2, in);
 
 
 	/* deinit */
