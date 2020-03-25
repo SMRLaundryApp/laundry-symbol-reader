@@ -227,9 +227,10 @@ int	symbol_base	(const img_s *restrict sym, img_s *restrict base)
 			ALX_CV_THRESH_BINARY_INV, 33, 10);	dbg_show(3, base);
 //	alx_cv_threshold(base, ALX_CV_THRESH_BINARY_INV, ALX_CV_THR_OTSU);
 								dbg_show(3, base);
+	alx_cv_erode_dilate(mask, 1);				dbg_show(3, mask);
 	alx_cv_holes_remove(base);				dbg_show(3, base);
 	alx_cv_clone(mask, base);				dbg_show(3, mask);
-	alx_cv_erode_dilate(mask, 1);				dbg_show(3, mask);
+	alx_cv_dilate_erode(mask, 1);				dbg_show(3, mask);
 	alx_cv_contours(mask, conts);
 	if (alx_cv_conts_largest(&cont, &i, conts))
 		goto err;
