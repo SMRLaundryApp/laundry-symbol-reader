@@ -11,7 +11,8 @@ MODULES	=								\
 	label								\
 	main								\
 	symbols								\
-	templates
+	templates/base							\
+	templates/templates
 
 SRC	= $(MODULES:%=$(SRC_DIR)/%.c)
 OBJ	= $(MODULES:%=$(BUILD_DIR)/%.o)
@@ -34,10 +35,11 @@ $(BUILD_DIR)/laundry-symbol-reader: $(OBJ)
 $(BUILD_DIR)/%.d: $(SRC_DIR)/%.c $(MK_DEPS)
 	$(Q)mkdir -p		$(@D)/
 	@echo	"	CC -M	$*.d"
-	$(Q)$(CC) $(CFLAGS) -MG -MT"$@" -MT"$(BUILD_DIR)/$*.s" -M $< -MF $@
+	$(Q)$(CC) $(CFLAGS) -I $(SRC_DIR)				\
+			-MG -MT"$@" -MT"$(BUILD_DIR)/$*.s" -M $< -MF $@
 $(BUILD_DIR)/%.s: $(SRC_DIR)/%.c $(BUILD_DIR)/%.d
 	@echo	"	CC	$*.s"
-	$(Q)$(CC) $(CFLAGS) -S $< -o $@
+	$(Q)$(CC) $(CFLAGS) -I $(SRC_DIR) -S $< -o $@
 $(BUILD_DIR)/%.o: $(BUILD_DIR)/%.s
 	@echo	"	AS	$*.o"
 	$(Q)$(AS) $< -o $@

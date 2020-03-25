@@ -15,15 +15,13 @@
 #include <libalx/base/compiler/size.h>
 #include <libalx/base/stdio/printf/b.h>
 #include <libalx/base/stdlib/getenv/getenv_s.h>
-#include <libalx/extra/cv/core/img/img.h>
-#include <libalx/extra/cv/highgui/file.h>
-#include <libalx/extra/cv/highgui/window.h>
-#include <libalx/extra/cv/types.h>
+#include <libalx/extra/cv/cv.h>
 
 #include "dbg.h"
 #include "label.h"
 #include "symbols.h"
-#include "templates.h"
+#include "templates/base.h"
+#include "templates/templates.h"
 
 
 /******************************************************************************

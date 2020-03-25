@@ -7,7 +7,7 @@
 /******************************************************************************
  ******* headers **************************************************************
  ******************************************************************************/
-#include "templates.h"
+#include "templates/templates.h"
 
 #include <math.h>
 #include <stddef.h>
@@ -39,23 +39,12 @@
 
 #include "dbg.h"
 #include "symbols.h"
+#include "templates/base.h"
 
 
 /******************************************************************************
  ******* macro ****************************************************************
  ******************************************************************************/
-#define TEMPLATES_DIR	"/usr/local/share/laundry-symbol-reader/templates/"
-#define T_BASE_DIR	TEMPLATES_DIR "base/"
-#define T_INNER_DIR	TEMPLATES_DIR "inner/"
-#define TEMPLATES_EXT	"png"
-
-#define CODE_BASE_POS	(1)
-#define CODE_BASE_LEN	(3)
-#define CODE_Y_N_POS	(CODE_BASE_POS + CODE_BASE_LEN)
-#define CODE_IN_POS	(CODE_Y_N_POS + 1)
-#define CODE_IN_LEN	(6)
-#define CODE_OUT_POS	(CODE_IN_POS + CODE_IN_LEN)
-#define CODE_OUT_LEN	(5)
 
 
 /******************************************************************************
@@ -131,8 +120,6 @@ img_s	*inner_templates[ARRAY_SIZE(t_inner_fnames)];
 /******************************************************************************
  ******* static prototypes ****************************************************
  ******************************************************************************/
-static
-int	load_t_base		(img_s *t, const char *fname);
 static
 int	load_t_inner		(img_s *t, const char *fname);
 static
@@ -210,62 +197,6 @@ int	load_templates	(void)
 			return	i + 320;
 	}
 	return	0;
-}
-
-int	match_t_base	(img_s *restrict sym, uint32_t *code, ptrdiff_t i)
-{
-	img_s		*base;
-	img_s		*tmp;
-	conts_s		*conts;
-	double		match, m;
-	int		status;
-
-	/* init */
-	status	= -1;
-	if (alx_cv_init_img(&base))
-		return	status;
-	if (alx_cv_init_img(&tmp))
-		goto err0;
-	if (alx_cv_init_conts(&conts))
-		goto err1;
-
-	/* Find base match */
-	status--;
-	if (symbol_base(sym, base))
-		goto err;					dbg_show(2, base);
-	status--;
-	match	= -INFINITY;
-	BITFIELD_SET(code, CODE_BASE_POS, CODE_BASE_LEN);
-
-	alx_cv_clone(tmp, base);
-	alx_cv_resize_2largest(tmp, base_templates[i]);
-	alx_cv_xor_2ref(tmp, base_templates[i]);		dbg_show(2, tmp);
-	m = alx_cv_compare_bitwise(base, base_templates[i], 2);	dbg_printf(1, "match: %lf\n", m);
-	if (m >= match) {
-								dbg_printf(1, "	%s\n", t_base_meaning[i]);
-		BITFIELD_WRITE(code, CODE_BASE_POS, CODE_BASE_LEN, i);
-		BIT_SET(code, CODE_Y_N_POS);
-		match	= m;					dbg_show(2, base_templates[i]);
-	}
-
-	alx_cv_clone(tmp, base);
-	alx_cv_resize_2largest(tmp, base_templates_not[i]);
-	alx_cv_xor_2ref(tmp, base_templates_not[i]);		dbg_show(2, tmp);
-	m = alx_cv_compare_bitwise(base, base_templates_not[i], 2);	dbg_printf(2, "match: %lf\n", m);
-	if (m >= match) {
-								dbg_printf(1, "	%s not\n", t_base_meaning[i]);
-		BITFIELD_WRITE(code, CODE_BASE_POS, CODE_BASE_LEN, i);
-		BIT_CLEAR(code, CODE_Y_N_POS);
-		match	= m;					dbg_show(2, base_templates_not[i]);
-	}
-								dbg_printf(2, "\n");
-
-	/* deinit */
-	status	= 0;
-err:	alx_cv_deinit_conts(conts);
-err1:	alx_cv_deinit_img(tmp);
-err0:	alx_cv_deinit_img(base);
-	return	status;
 }
 
 int	match_t_inner	(img_s *restrict sym, uint32_t *code)
@@ -351,41 +282,6 @@ err0:	alx_cv_deinit_img(out);
 /******************************************************************************
  ******* static function definitions ******************************************
  ******************************************************************************/
-static
-int	load_t_base		(img_s *t, const char *fname)
-{
-	conts_s		*conts;
-	const cont_s	*cont;
-	rect_s		*rect;
-	int		status;
-
-	/* init */
-	status	= -1;
-	if (alx_cv_init_conts(&conts))
-		return	status;
-	if (alx_cv_init_rect(&rect))
-		goto err0;
-
-	status--;
-	if (alx_cv_imread_gray(t, fname))
-		goto err;					dbg_show(3, t);
-	alx_cv_threshold(t, ALX_CV_THRESH_BINARY_INV, ALX_CV_THR_OTSU);
-								dbg_show(4, t);
-	alx_cv_holes_fill(t);					dbg_show(4, t);
-	alx_cv_contours(t, conts);				dbg_show(4, t);
-	status--;
-	if (alx_cv_conts_largest(&cont, NULL, conts))
-		goto err;
-	alx_cv_bounding_rect(rect, cont);
-	alx_cv_roi_set(t, rect);				dbg_show(3, t);
-
-	/* deinit */
-	status	= 0;
-err:	alx_cv_deinit_rect(rect);
-err0:	alx_cv_deinit_conts(conts);
-	return	status;
-}
-
 static
 int	load_t_inner		(img_s *t, const char *fname)
 {

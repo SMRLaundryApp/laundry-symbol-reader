@@ -19,24 +19,7 @@
 #include <libalx/base/stdlib/maximum.h>
 #include <libalx/base/stdlib/minimum.h>
 #include <libalx/base/stdlib/strto/strtoi_s.h>
-#include <libalx/extra/cv/alx/gray.h>
-#include <libalx/extra/cv/alx/median.h>
-#include <libalx/extra/cv/core/array/bitwise.h>
-#include <libalx/extra/cv/core/array/component.h>
-#include <libalx/extra/cv/core/array/normalize.h>
-#include <libalx/extra/cv/core/contours/init.h>
-#include <libalx/extra/cv/core/img/img.h>
-#include <libalx/extra/cv/core/rect/rect.h>
-#include <libalx/extra/cv/core/roi/roi.h>
-#include <libalx/extra/cv/imgproc/features/edges.h>
-#include <libalx/extra/cv/imgproc/filter/dilate_erode.h>
-#include <libalx/extra/cv/imgproc/filter/smooth.h>
-#include <libalx/extra/cv/imgproc/geometric/rotate.h>
-#include <libalx/extra/cv/imgproc/miscellaneous/fill.h>
-#include <libalx/extra/cv/imgproc/miscellaneous/threshold.h>
-#include <libalx/extra/cv/imgproc/shape/contour/contours.h>
-#include <libalx/extra/cv/imgproc/shape/rect.h>
-#include <libalx/extra/cv/types.h>
+#include <libalx/extra/cv/cv.h>
 
 #include "dbg.h"
 
@@ -146,14 +129,17 @@ int	find_symbols_vertically		(img_s *img)
 	/* Find syms */
 	status--;
 	alx_cv_clone(tmp, clean);				dbg_show(3, tmp);
+	alx_cv_extract_imgdata(tmp, NULL, &w, &h, NULL, NULL, NULL);
 	alx_cv_normalize(tmp);					dbg_show(3, tmp);
 	alx_cv_smooth(tmp, ALX_CV_SMOOTH_MEDIAN, 5);		dbg_show(3, tmp);
-	alx_cv_canny(tmp, 127, 200, 3, true);			dbg_show(3, tmp);
+	h	= ALX_MIN(w, h);
+	alx_cv_adaptive_thr(tmp, ALX_CV_ADAPTIVE_THRESH_GAUSSIAN,
+			ALX_CV_THRESH_BINARY_INV, h, 25);	dbg_show(3, tmp);
+//	alx_cv_canny(tmp, 127, 200, 3, true);			dbg_show(3, tmp);
 	alx_cv_dilate_h(tmp, 1);				dbg_show(3, tmp);
 	alx_cv_dilate(tmp, 1);					dbg_show(3, tmp);
 	alx_cv_holes_fill(tmp);					dbg_show(3, tmp);
 	alx_cv_erode_dilate(tmp, 15);				dbg_show(3, tmp);
-	alx_cv_extract_imgdata(tmp, NULL, &w, NULL, NULL, NULL, NULL);
 	alx_cv_dilate_h(tmp, w / 6);				dbg_show(3, tmp);
 	alx_cv_contours(tmp, conts);
 	if (alx_cv_conts_largest(&syms, NULL, conts))

@@ -16,26 +16,10 @@
 
 #define ALX_NO_PREFIX
 #include <libalx/base/compiler/size.h>
-#include <libalx/extra/cv/alx/median.h>
-#include <libalx/extra/cv/core/array/bitwise.h>
-#include <libalx/extra/cv/core/array/normalize.h>
-#include <libalx/extra/cv/core/img/img.h>
-#include <libalx/extra/cv/core/contours/extract.h>
-#include <libalx/extra/cv/core/contours/init.h>
-#include <libalx/extra/cv/core/rect/rect.h>
-#include <libalx/extra/cv/core/roi/roi.h>
-#include <libalx/extra/cv/imgproc/features/edges.h>
-#include <libalx/extra/cv/imgproc/filter/dilate_erode.h>
-#include <libalx/extra/cv/imgproc/filter/smooth.h>
-#include <libalx/extra/cv/imgproc/miscellaneous/fill.h>
-#include <libalx/extra/cv/imgproc/miscellaneous/threshold.h>
-#include <libalx/extra/cv/imgproc/shape/contour/contours.h>
-#include <libalx/extra/cv/imgproc/shape/contour/sort.h>
-#include <libalx/extra/cv/imgproc/shape/rect.h>
-#include <libalx/extra/cv/types.h>
+#include <libalx/extra/cv/cv.h>
 
 #include "dbg.h"
-#include "templates.h"
+#include "templates/templates.h"
 
 
 /******************************************************************************
@@ -237,16 +221,21 @@ int	symbol_base	(const img_s *restrict sym, img_s *restrict base)
 	/* Find base */
 	status--;
 	alx_cv_clone(base, sym);				dbg_show(2, base);
-	alx_cv_threshold(base, ALX_CV_THRESH_BINARY_INV, ALX_CV_THR_OTSU);
+	alx_cv_normalize(base);					dbg_show(3, base);
+//	alx_cv_smooth(base, ALX_CV_SMOOTH_MEDIAN, 3);		dbg_show(3, tmp);
+	alx_cv_adaptive_thr(base, ALX_CV_ADAPTIVE_THRESH_GAUSSIAN,
+			ALX_CV_THRESH_BINARY_INV, 33, 10);	dbg_show(3, base);
+//	alx_cv_threshold(base, ALX_CV_THRESH_BINARY_INV, ALX_CV_THR_OTSU);
 								dbg_show(3, base);
+	alx_cv_holes_remove(base);				dbg_show(3, base);
 	alx_cv_clone(mask, base);				dbg_show(3, mask);
-	alx_cv_dilate_erode(mask, 1);					dbg_show(3, mask);
+	alx_cv_erode_dilate(mask, 1);				dbg_show(3, mask);
 	alx_cv_contours(mask, conts);
 	if (alx_cv_conts_largest(&cont, &i, conts))
 		goto err;
 	alx_cv_contour_mask(mask, conts, i);			dbg_show(3, mask);
 	alx_cv_and_2ref(base, mask);				dbg_show(3, base);
-	alx_cv_holes_fill(base);				dbg_show(3, base);
+//	alx_cv_holes_fill(base);				dbg_show(3, base);
 	alx_cv_bounding_rect(rect, cont);
 	alx_cv_roi_set(base, rect);				dbg_show(2, base);
 
@@ -279,12 +268,10 @@ int	symbol_inner	(const img_s *restrict sym, img_s *restrict in)
 	/* Find base */
 	status--;
 	alx_cv_clone(in, sym);					dbg_show(2, in);
-	alx_cv_threshold(in, ALX_CV_THRESH_BINARY_INV, ALX_CV_THR_OTSU);
-								dbg_show(3, in);
-	alx_cv_clone(mask, in);					dbg_show(3, mask);
-	alx_cv_holes_mask(mask);				dbg_show(3, mask);
-	alx_cv_holes_fill(mask);				dbg_show(3, mask);
-	alx_cv_and_2ref(in, mask);				dbg_show(3, in);
+	alx_cv_normalize(in);					dbg_show(3, in);
+	alx_cv_adaptive_thr(in, ALX_CV_ADAPTIVE_THRESH_GAUSSIAN,
+			ALX_CV_THRESH_BINARY_INV, 33, 10);	dbg_show(3, in);
+	alx_cv_holes_extract(in);				dbg_show(3, in);
 	alx_cv_clone(mask, in);					dbg_show(3, mask);
 	alx_cv_dilate_erode(mask, 10);				dbg_show(3, mask);
 	alx_cv_contours(mask, conts);
