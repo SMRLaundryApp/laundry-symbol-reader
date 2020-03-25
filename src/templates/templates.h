@@ -7,7 +7,7 @@
 /******************************************************************************
  ******* include guard ********************************************************
  ******************************************************************************/
-#pragma once	/* templates.h */
+#pragma once	/* templates/templates.h */
 
 
 /******************************************************************************
@@ -22,6 +22,18 @@
 /******************************************************************************
  ******* macros ***************************************************************
  ******************************************************************************/
+#define TEMPLATES_DIR	"/usr/local/share/laundry-symbol-reader/templates/"
+#define T_BASE_DIR	TEMPLATES_DIR "base/"
+#define T_INNER_DIR	TEMPLATES_DIR "inner/"
+#define TEMPLATES_EXT	"png"
+
+#define CODE_BASE_POS	(1)
+#define CODE_BASE_LEN	(3)
+#define CODE_Y_N_POS	(CODE_BASE_POS + CODE_BASE_LEN)
+#define CODE_IN_POS	(CODE_Y_N_POS + 1)
+#define CODE_IN_LEN	(6)
+#define CODE_OUT_POS	(CODE_IN_POS + CODE_IN_LEN)
+#define CODE_OUT_LEN	(5)
 
 
 /******************************************************************************
@@ -92,13 +104,10 @@ enum	T_Outer_Meaning {
 
 /******************************************************************************
  ******* variables ************************************************************
- ******************************************************************************//*
+ ******************************************************************************/
 extern	const char *const	t_base_meaning[T_BASE_QTY];
-*/
 extern	const char *const	t_base_fnames[T_BASE_QTY];
-/*
 extern	const char *const	t_inner_meaning[T_INNER_MEANING_QTY];
-*/
 extern	const char *const	t_inner_fnames[T_INNER_QTY];
 
 extern	img_s	*base_templates[ARRAY_SIZE(t_base_fnames)];
@@ -112,7 +121,6 @@ extern	img_s	*inner_templates[ARRAY_SIZE(t_inner_fnames)];
 int	init_templates	(void);
 void	deinit_templates(void);
 int	load_templates	(void);
-int	match_t_base	(img_s *restrict sym, uint32_t *code, ptrdiff_t i);
 int	match_t_inner	(img_s *restrict sym, uint32_t *code);
 int	match_t_outer	(img_s *restrict sym, uint32_t *code);
 

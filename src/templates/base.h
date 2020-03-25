@@ -7,83 +7,21 @@
 /******************************************************************************
  ******* include guard ********************************************************
  ******************************************************************************/
-#pragma once	/* dbg.h */
+#pragma once	/* templates/base.h */
 
 
 /******************************************************************************
  ******* headers **************************************************************
  ******************************************************************************/
-#include <stdbool.h>
+#include <stdint.h>
 
-#define ALX_NO_PREFIX
-#include <libalx/base/errno/perror.h>
-#include <libalx/base/stdio/seekc.h>
-#include <libalx/extra/cv/highgui/window.h>
+#include <libalx/base/compiler/size.h>
+#include <libalx/extra/cv/types.h>
 
 
 /******************************************************************************
- ******* macro ****************************************************************
+ ******* macros ***************************************************************
  ******************************************************************************/
-#define DBG			0
-#define DBG_SHOW_WAIT		0
-#define DBG_SHOWTIME(dbg)	(					\
-{									\
-	int	tm_;							\
-									\
-	switch (dbg) {							\
-	case 0:								\
-		tm_	= 5000;						\
-		break;							\
-	case 1:								\
-		tm_	= 1000;						\
-		break;							\
-	case 2:								\
-		tm_	= 300;						\
-		break;							\
-	case 3:								\
-		tm_	= 100;						\
-		break;							\
-	case 4:								\
-		tm_	= 30;						\
-		break;							\
-	}								\
-									\
-	if (DBG_SHOW_WAIT)						\
-		tm_	= -1;						\
-									\
-	tm_;								\
-}									\
-)
-
-#if defined(DBG)
-#define dbg_show(dbg, img)		do				\
-{									\
-									\
-	if (dbg <= DBG) {						\
-		alx_cv_imshow(img, "dbg", DBG_SHOWTIME(dbg));		\
-	}								\
-} while (0);
-
-#define dbg_printf(dbg, fmt, ...)	do				\
-{									\
-									\
-	if (dbg <= DBG) {						\
-		printf(fmt, ##__VA_ARGS__);				\
-	}								\
-} while (0);
-
-#define dbg_update_win()		do				\
-{									\
-									\
-	if (DBG) {							\
-		alx_cv_destroy_all_windows();				\
-		alx_cv_named_window("dbg", ALX_CV_WINDOW_NORMAL);	\
-	}								\
-} while (0);
-#else
-#define dbg_show(dbg, img)	do {} while (0);
-#define dbg_update_win()	do {} while (0);
-#endif	/* defined(DBG) */
 
 
 /******************************************************************************
@@ -97,8 +35,15 @@
 
 
 /******************************************************************************
+ ******* variables ************************************************************
+ ******************************************************************************/
+
+
+/******************************************************************************
  ******* prototypes ***********************************************************
  ******************************************************************************/
+int	load_t_base	(img_s *t, const char *fname);
+int	match_t_base	(img_s *restrict sym, uint32_t *code, ptrdiff_t i);
 
 
 /******************************************************************************
