@@ -37,7 +37,7 @@ main()
 	wrap_env	"$1"
 	wrap_options	"${vol}" "${env}"
 
-	cmd="docker container run	${opt}	laundrysymbolreader/reader:v1-b3"
+	cmd="docker container run	${opt}	laundrysymbolreader/reader"
 	${cmd}
 }
 
