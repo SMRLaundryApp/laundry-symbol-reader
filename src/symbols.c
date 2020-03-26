@@ -222,7 +222,7 @@ int	symbol_base	(const img_s *restrict sym, img_s *restrict base)
 	status--;
 	alx_cv_clone(base, sym);				dbg_show(2, base);
 	alx_cv_normalize(base);					dbg_show(3, base);
-//	alx_cv_smooth(base, ALX_CV_SMOOTH_MEDIAN, 3);		dbg_show(3, tmp);
+	alx_cv_smooth(base, ALX_CV_SMOOTH_MEDIAN, 3);		dbg_show(3, base);
 	alx_cv_adaptive_thr(base, ALX_CV_ADAPTIVE_THRESH_GAUSSIAN,
 			ALX_CV_THRESH_BINARY_INV, 33, 10);	dbg_show(3, base);
 //	alx_cv_threshold(base, ALX_CV_THRESH_BINARY_INV, ALX_CV_THR_OTSU);
@@ -230,7 +230,7 @@ int	symbol_base	(const img_s *restrict sym, img_s *restrict base)
 	alx_cv_erode_dilate(mask, 1);				dbg_show(3, mask);
 	alx_cv_holes_remove(base);				dbg_show(3, base);
 	alx_cv_clone(mask, base);				dbg_show(3, mask);
-	alx_cv_dilate_erode(mask, 1);				dbg_show(3, mask);
+//	alx_cv_dilate_erode(mask, 1);				dbg_show(3, mask);
 	alx_cv_contours(mask, conts);
 	if (alx_cv_conts_largest(&cont, &i, conts))
 		goto err;
@@ -308,6 +308,7 @@ int	symbol_outer	(const img_s *restrict sym, img_s *restrict out)
 	/* Find base */
 	status--;
 	alx_cv_clone(out, sym);					dbg_show(2, out);
+	alx_cv_smooth(out, ALX_CV_SMOOTH_MEDIAN, 3);		dbg_show(3, out);
 	alx_cv_threshold(out, ALX_CV_THRESH_BINARY_INV, ALX_CV_THR_OTSU);
 								dbg_show(3, out);
 	alx_cv_holes_fill(out);					dbg_show(3, mask);
