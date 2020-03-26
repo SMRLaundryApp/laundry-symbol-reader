@@ -19,23 +19,7 @@
 #include <libalx/base/stdint/mask/bit.h>
 #include <libalx/base/stdint/mask/field.h>
 #include <libalx/base/stdio/printf/sbprintf.h>
-#include <libalx/extra/cv/alx/compare.h>
-#include <libalx/extra/cv/alx/median.h>
-#include <libalx/extra/cv/core/array/bitwise.h>
-#include <libalx/extra/cv/core/img/img.h>
-#include <libalx/extra/cv/core/contours/extract.h>
-#include <libalx/extra/cv/core/contours/init.h>
-#include <libalx/extra/cv/core/rect/rect.h>
-#include <libalx/extra/cv/core/roi/roi.h>
-#include <libalx/extra/cv/highgui/file.h>
-#include <libalx/extra/cv/imgproc/filter/border.h>
-#include <libalx/extra/cv/imgproc/filter/dilate_erode.h>
-#include "libalx/extra/cv/imgproc/geometric/resize.h"
-#include <libalx/extra/cv/imgproc/miscellaneous/fill.h>
-#include <libalx/extra/cv/imgproc/miscellaneous/threshold.h>
-#include <libalx/extra/cv/imgproc/shape/contour/contours.h>
-#include <libalx/extra/cv/imgproc/shape/rect.h>
-#include <libalx/extra/cv/types.h>
+#include <libalx/extra/cv/cv.h>
 
 #include "dbg.h"
 #include "symbols.h"
@@ -224,16 +208,20 @@ int	match_t_inner	(img_s *restrict sym, uint32_t *code)
 		goto err;					dbg_show(2, in);
 	status--;
 	match	= -INFINITY;
+	BITFIELD_WRITE(code, CODE_IN_POS, CODE_IN_LEN, 0);
 	for (ptrdiff_t i = 0; i < ARRAY_SSIZE(inner_templates); i++) {
 		m	= alx_cv_compare_bitwise(in, inner_templates[i], 2);
-								dbg_printf(2, "match: %lf\n", m);
+								dbg_printf(2, "match: %.4lf\n", m);
 		if (m >= match) {
 			BITFIELD_WRITE(code, CODE_IN_POS, CODE_IN_LEN, i);
-			match		= m;			dbg_show(2, inner_templates[i]);
+			match		= m;
+								dbg_printf(1, "%s\n", t_inner_fnames[i]);
 		}
 	}
+								dbg_show(1, inner_templates[BITFIELD_READ(*code, CODE_IN_POS, CODE_IN_LEN)]);
 
 	t_inner_fix_code(code);
+								dbg_printf(1, "%s\n", t_inner_meaning[BITFIELD_READ(*code, CODE_IN_POS, CODE_IN_LEN)]);
 
 	/* deinit */
 	status	= 0;
@@ -302,18 +290,16 @@ int	load_t_inner		(img_s *t, const char *fname)
 
 	status--;
 	if (alx_cv_imread_gray(t, fname))
-		goto err;					dbg_show(3, t);
+		goto err;					dbg_show(4, t);
 	alx_cv_threshold(t, ALX_CV_THRESH_BINARY_INV, ALX_CV_THR_OTSU);
-								dbg_show(4, t);
-	alx_cv_border_black(t, 5);				dbg_show(4, t);
-	alx_cv_clone(tmp, t);					dbg_show(4, tmp);
-	alx_cv_dilate_erode(tmp, 5);				dbg_show(4, tmp);
-	alx_cv_holes_fill(t);					dbg_show(4, tmp);
-	alx_cv_contours(tmp, conts);				dbg_show(4, t);
-	if (alx_cv_conts_largest(&cont, NULL, conts))
+	alx_cv_border_black(t, 5);
+	alx_cv_clone(tmp, t);
+	alx_cv_dilate_erode(tmp, 5);
+	alx_cv_contours(tmp, conts);
+	if (alx_cv_conts_largest_a(&cont, NULL, conts))
 		goto err;
 	alx_cv_bounding_rect(rect, cont);
-	alx_cv_roi_set(t, rect);				dbg_show(3, t);
+	alx_cv_roi_set(t, rect);				dbg_show(4, t);
 
 	/* deinit */
 	status	= 0;

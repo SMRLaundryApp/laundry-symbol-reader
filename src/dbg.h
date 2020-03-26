@@ -32,13 +32,13 @@
 									\
 	switch (dbg) {							\
 	case 0:								\
-		tm_	= 5000;						\
+		tm_	= 500;						\
 		break;							\
 	case 1:								\
-		tm_	= 1000;						\
+		tm_	= 300;						\
 		break;							\
 	case 2:								\
-		tm_	= 300;						\
+		tm_	= 200;						\
 		break;							\
 	case 3:								\
 		tm_	= 100;						\
