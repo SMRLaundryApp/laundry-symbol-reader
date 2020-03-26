@@ -229,25 +229,15 @@ int	symbol_base	(const img_s *restrict sym, img_s *restrict base)
 	/* Find base */
 	status--;
 	alx_cv_clone(base, sym);				dbg_show(2, base);
-//	alx_cv_normalize(base);					dbg_show(3, base);
-//	alx_cv_smooth(base, ALX_CV_SMOOTH_MEDIAN, 3);		dbg_show(3, base);
-//	alx_cv_adaptive_thr(base, ALX_CV_ADAPTIVE_THRESH_GAUSSIAN,
-//			ALX_CV_THRESH_BINARY_INV, 33, 10);	dbg_show(3, base);
-//	alx_cv_threshold(base, ALX_CV_THRESH_BINARY_INV, ALX_CV_THR_OTSU);
-								dbg_show(3, base);
-//	alx_cv_erode_dilate(base, 1);				dbg_show(3, mask);
 	alx_cv_holes_remove(base);				dbg_show(3, base);
 	alx_cv_clone(mask, base);				dbg_show(3, mask);
-//	alx_cv_dilate_erode(mask, 1);				dbg_show(3, mask);
 	alx_cv_contours(mask, conts);
 	if (alx_cv_conts_largest(&cont, &i, conts))
 		goto err;
 	alx_cv_contour_mask(mask, conts, i);			dbg_show(3, mask);
 	alx_cv_and_2ref(base, mask);				dbg_show(3, base);
-//	alx_cv_holes_fill(base);				dbg_show(3, base);
 	alx_cv_bounding_rect(rect, cont);
 	alx_cv_roi_set(base, rect);				dbg_show(2, base);
-
 
 	/* deinit */
 	status	= 0;
@@ -274,12 +264,9 @@ int	symbol_inner	(const img_s *restrict sym, img_s *restrict in)
 	if (alx_cv_init_rect(&rect))
 		goto err1;
 
-	/* Find base */
+	/* Find inner */
 	status--;
 	alx_cv_clone(in, sym);					dbg_show(2, in);
-//	alx_cv_normalize(in);					dbg_show(3, in);
-//	alx_cv_adaptive_thr(in, ALX_CV_ADAPTIVE_THRESH_GAUSSIAN,
-//			ALX_CV_THRESH_BINARY_INV, 33, 10);	dbg_show(3, in);
 	alx_cv_holes_extract(in);				dbg_show(3, in);
 	alx_cv_clone(mask, in);					dbg_show(3, mask);
 	alx_cv_dilate_erode(mask, 10);				dbg_show(3, mask);
@@ -313,13 +300,9 @@ int	symbol_outer	(const img_s *restrict sym, img_s *restrict out)
 	if (alx_cv_init_conts(&conts))
 		goto err0;
 
-	/* Find base */
+	/* Find outer */
 	status--;
 	alx_cv_clone(out, sym);					dbg_show(2, out);
-//	alx_cv_normalize(out);					dbg_show(3, out);
-//	alx_cv_smooth(out, ALX_CV_SMOOTH_MEDIAN, 3);		dbg_show(3, out);
-///	alx_cv_adaptive_thr(out, ALX_CV_ADAPTIVE_THRESH_GAUSSIAN,
-//			ALX_CV_THRESH_BINARY_INV, 33, 10);	dbg_show(3, out);
 	alx_cv_holes_fill(out);					dbg_show(3, mask);
 	alx_cv_clone(mask, out);				dbg_show(3, mask);
 	alx_cv_contours(mask, conts);
@@ -329,7 +312,6 @@ int	symbol_outer	(const img_s *restrict sym, img_s *restrict out)
 	alx_cv_invert(mask);					dbg_show(3, mask);
 	alx_cv_and_2ref(out, mask);				dbg_show(3, out);
 	alx_cv_erode_dilate(out, 1);				dbg_show(2, out);
-
 
 	/* deinit */
 	status	= 0;
