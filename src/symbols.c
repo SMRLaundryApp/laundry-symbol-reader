@@ -16,6 +16,7 @@
 
 #define ALX_NO_PREFIX
 #include <libalx/base/compiler/size.h>
+#include <libalx/base/errno/perror.h>
 #include <libalx/base/stdlib/minimum.h>
 #include <libalx/extra/cv/cv.h>
 
@@ -95,18 +96,23 @@ int	extract_symbols	(img_s *restrict img)
 
 	/* Find symbols */
 	status--;
+	alx_cv_extract_imgdata(img, NULL, &w, &h, NULL, NULL, NULL);
 	alx_cv_clone(tmp, img);					dbg_show(2, tmp);
 	alx_cv_normalize(tmp);					dbg_show(3, tmp);
 	alx_cv_smooth(tmp, ALX_CV_SMOOTH_MEDIAN, 3);		dbg_show(3, tmp);
 	alx_cv_adaptive_thr(tmp, ALX_CV_ADAPTIVE_THRESH_GAUSSIAN,
-			ALX_CV_THRESH_BINARY_INV, 99, 5);	dbg_show(3, tmp);
-	alx_cv_holes_fill(tmp);					dbg_show(3, tmp);
-	alx_cv_erode_dilate(tmp, 5);				dbg_show(2, tmp);
+			ALX_CV_THRESH_BINARY_INV, h / 2, 5);	dbg_show(3, tmp);
+	alx_cv_holes_fill(tmp);
+	alx_cv_erode_dilate(tmp, h / 15);				dbg_show(2, tmp);
+	alx_cv_dilate_erode(tmp, h / 15);				dbg_show(2, tmp);
 	alx_cv_contours(tmp, conts);
 	alx_cv_sort_conts_lr(conts);
 	if (alx_cv_extract_conts(conts, NULL, &nsyms))
 		goto err;
-								dbg_printf(1, "--%i--\n", (int)nsyms);
+	if (nsyms != 5) {
+		perrorx("[error]	%i symbols detected\n", (int)nsyms);
+		goto err;
+	}
 
 	/* Crop to symbols */
 	status--;
@@ -198,7 +204,7 @@ int	clean_symbol	(img_s *img)
 	alx_cv_smooth(img, ALX_CV_SMOOTH_MEDIAN, 3);		dbg_show(3, img);
 	w	= ALX_MIN(w, h);
 	alx_cv_adaptive_thr(img, ALX_CV_ADAPTIVE_THRESH_GAUSSIAN,
-			ALX_CV_THRESH_BINARY_INV, 33, 10);	dbg_show(3, img);
+			ALX_CV_THRESH_BINARY_INV, w / 2, 25);	dbg_show(3, img);
 
 	/* deinit */
 	status	= 0;
@@ -232,7 +238,7 @@ int	symbol_base	(const img_s *restrict sym, img_s *restrict base)
 	alx_cv_holes_remove(base);				dbg_show(3, base);
 	alx_cv_clone(mask, base);				dbg_show(3, mask);
 	alx_cv_contours(mask, conts);
-	if (alx_cv_conts_largest(&cont, &i, conts))
+	if (alx_cv_conts_largest_a(&cont, &i, conts))
 		goto err;
 	alx_cv_contour_mask(mask, conts, i);			dbg_show(3, mask);
 	alx_cv_and_2ref(base, mask);				dbg_show(3, base);
@@ -271,11 +277,10 @@ int	symbol_inner	(const img_s *restrict sym, img_s *restrict in)
 	alx_cv_clone(mask, in);					dbg_show(3, mask);
 	alx_cv_dilate_erode(mask, 10);				dbg_show(3, mask);
 	alx_cv_contours(mask, conts);
-	if (alx_cv_conts_largest(&cont, NULL, conts))
+	if (alx_cv_conts_largest_a(&cont, NULL, conts))
 		goto err;
 	alx_cv_bounding_rect(rect, cont);
-	alx_cv_roi_set(in, rect);				dbg_show(3, in);
-	alx_cv_holes_fill(in);					dbg_show(2, in);
+	alx_cv_roi_set(in, rect);				dbg_show(2, in);
 
 
 	/* deinit */
@@ -306,7 +311,7 @@ int	symbol_outer	(const img_s *restrict sym, img_s *restrict out)
 	alx_cv_holes_fill(out);					dbg_show(3, mask);
 	alx_cv_clone(mask, out);				dbg_show(3, mask);
 	alx_cv_contours(mask, conts);
-	if (alx_cv_conts_largest(NULL, &i, conts))
+	if (alx_cv_conts_largest_a(NULL, &i, conts))
 		goto err;
 	alx_cv_contour_mask(mask, conts, i);			dbg_show(3, mask);
 	alx_cv_invert(mask);					dbg_show(3, mask);

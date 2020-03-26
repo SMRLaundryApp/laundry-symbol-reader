@@ -19,23 +19,7 @@
 #include <libalx/base/stdint/mask/bit.h>
 #include <libalx/base/stdint/mask/field.h>
 #include <libalx/base/stdio/printf/sbprintf.h>
-#include <libalx/extra/cv/alx/compare.h>
-#include <libalx/extra/cv/alx/median.h>
-#include <libalx/extra/cv/core/array/bitwise.h>
-#include <libalx/extra/cv/core/img/img.h>
-#include <libalx/extra/cv/core/contours/extract.h>
-#include <libalx/extra/cv/core/contours/init.h>
-#include <libalx/extra/cv/core/rect/rect.h>
-#include <libalx/extra/cv/core/roi/roi.h>
-#include <libalx/extra/cv/highgui/file.h>
-#include <libalx/extra/cv/imgproc/filter/border.h>
-#include <libalx/extra/cv/imgproc/filter/dilate_erode.h>
-#include "libalx/extra/cv/imgproc/geometric/resize.h"
-#include <libalx/extra/cv/imgproc/miscellaneous/fill.h>
-#include <libalx/extra/cv/imgproc/miscellaneous/threshold.h>
-#include <libalx/extra/cv/imgproc/shape/contour/contours.h>
-#include <libalx/extra/cv/imgproc/shape/rect.h>
-#include <libalx/extra/cv/types.h>
+#include <libalx/extra/cv/cv.h>
 
 #include "dbg.h"
 #include "symbols.h"
@@ -90,28 +74,33 @@ int	match_t_base	(img_s *restrict sym, uint32_t *code, ptrdiff_t i)
 	match	= -INFINITY;
 	BITFIELD_SET(code, CODE_BASE_POS, CODE_BASE_LEN);
 
+	m = alx_cv_compare_bitwise(base, base_templates[i], 2);	dbg_printf(2, "match: %.5lf\n", m);
 	alx_cv_clone(tmp, base);
 	alx_cv_resize_2largest(tmp, base_templates[i]);
 	alx_cv_xor_2ref(tmp, base_templates[i]);		dbg_show(2, tmp);
-	m = alx_cv_compare_bitwise(base, base_templates[i], 2);	dbg_printf(1, "match: %lf\n", m);
 	if (m >= match) {
-								dbg_printf(1, "	%s\n", t_base_meaning[i]);
 		BITFIELD_WRITE(code, CODE_BASE_POS, CODE_BASE_LEN, i);
 		BIT_SET(code, CODE_Y_N_POS);
-		match	= m;					dbg_show(2, base_templates[i]);
+		match	= m;
 	}
 
+	m = alx_cv_compare_bitwise(base, base_templates_not[i], 2);	dbg_printf(2, "match: %.5lf\n", m);
 	alx_cv_clone(tmp, base);
 	alx_cv_resize_2largest(tmp, base_templates_not[i]);
 	alx_cv_xor_2ref(tmp, base_templates_not[i]);		dbg_show(2, tmp);
-	m = alx_cv_compare_bitwise(base, base_templates_not[i], 2);	dbg_printf(2, "match: %lf\n", m);
 	if (m >= match) {
-								dbg_printf(1, "	%s not\n", t_base_meaning[i]);
 		BITFIELD_WRITE(code, CODE_BASE_POS, CODE_BASE_LEN, i);
 		BIT_CLEAR(code, CODE_Y_N_POS);
-		match	= m;					dbg_show(2, base_templates_not[i]);
+		match	= m;
 	}
-								dbg_printf(2, "\n");
+
+	if (BIT_READ(*code, CODE_Y_N_POS)) {
+								dbg_printf(1, "%s\n", t_base_meaning[i]);
+								dbg_show(1, base_templates[i]);
+	} else {
+								dbg_printf(1, "%s not\n", t_base_meaning[i]);
+								dbg_show(1, base_templates_not[i]);
+	}
 
 	/* deinit */
 	status	= 0;
@@ -137,16 +126,14 @@ int	load_t_base		(img_s *t, const char *fname)
 
 	status--;
 	if (alx_cv_imread_gray(t, fname))
-		goto err;					dbg_show(3, t);
+		goto err;					dbg_show(4, t);
 	alx_cv_threshold(t, ALX_CV_THRESH_BINARY_INV, ALX_CV_THR_OTSU);
-								dbg_show(4, t);
-//	alx_cv_holes_fill(t);					dbg_show(4, t);
-	alx_cv_contours(t, conts);				dbg_show(4, t);
+	alx_cv_contours(t, conts);
 	status--;
-	if (alx_cv_conts_largest(&cont, NULL, conts))
+	if (alx_cv_conts_largest_a(&cont, NULL, conts))
 		goto err;
 	alx_cv_bounding_rect(rect, cont);
-	alx_cv_roi_set(t, rect);				dbg_show(3, t);
+	alx_cv_roi_set(t, rect);				dbg_show(4, t);
 
 	/* deinit */
 	status	= 0;
