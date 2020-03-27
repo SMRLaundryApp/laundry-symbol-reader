@@ -6,17 +6,21 @@ Laundry symbol reader
 
 compile:
 --------
-$ [make clean &&] make
+.. code-block:: sh
+	$ [make clean &&] make
 
 install:
 --------
-$ sudo make install
+.. code-block:: sh
+	$ sudo make install
 
 run (docker):
 -------------
-$ ./laundry-symbol-reader-dk relative/path/to/image.extension
+.. code-block:: sh
+	$ ./laundry-symbol-reader-dk relative/path/to/image.extension
 
 run (non docker):
 -----------------
-$ export IMG_FNAME=relative/path/to/image.extension
-$ laundry-symbol-reader 
+.. code-block:: sh
+	$ export IMG_FNAME=relative/path/to/image.extension
+	$ laundry-symbol-reader 
