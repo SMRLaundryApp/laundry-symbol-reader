@@ -6,7 +6,7 @@ Laundry symbol reader
 
 compile:
 --------
-.. code-block::
+.. code-block:: sh
 
 	$ [make clean &&] make
 
