@@ -7,7 +7,11 @@ Laundry symbol reader
 Prerequisites
 =============
 
-The program depends on libalx-base and libalx-cv (both from libalx_) being installed in the system, and those libraries depend on some other packages being installed in the system.  For those reasons, I recommend debian 11 (bullseye) as the operating system.  That's the OS used in the docker image.  Other compatible OSes include: manjaro.
+The program depends on libalx-base and libalx-cv (both from libalx_) being
+installed in the system, and those libraries depend on some other packages
+being installed in the system.  For those reasons, I recommend debian 11
+(bullseye) as the operating system.  That's the OS used in the docker image.
+  Other compatible OSes include: manjaro.
 
 .. _libalx: https://github.com/alejandro-colomar/libalx
 
@@ -38,7 +42,11 @@ Running the program
 compile:
 --------
 
-Before compiling you may want to modify the value of the variable ``dbg`` in the file ``src/dbg.h`` to some higher value to see some images and text of the process.  The value should be between 0 and 4, (values lower than 0 will act as 0, and values greater than 4 will act as 4).  The higher the value, the more debugging information.
+Before compiling you may want to modify the value of the variable ``dbg``
+in the file ``src/dbg.h`` to some higher value to see some images and text of
+the process.  The value should be between 0 and 4, (values lower than 0 will
+act as 0, and values greater than 4 will act as 4).  The higher the value, the
+more debugging information.
 
 .. code-block:: sh
 
@@ -64,7 +72,8 @@ run:
 Docker
 ======
 
-If you don't have the system prerequisites above you can just run a docker container with the program already installed.
+If you don't have the system prerequisites above you can just run a docker
+container with the program already installed.
 This docker image is also used by the App.
 The only drawback is that you don't have a display; the only output is text.
 
@@ -78,7 +87,9 @@ download:
 run:
 ----
 
-There are two options:  you can run the docker command directly, or you can run a script included in this repository (you need to download the script (or the full repository) for the second option).
+There are two options:  you can run the docker command directly, or you can
+run a script included in this repository (you need to download the script (or
+the full repository) for the second option).
 
 docker:
 .......
