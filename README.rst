@@ -86,7 +86,7 @@ run:
 ----
 .. code-block:: sh
 
-	$ export IMG_FNAME=relative/path/to/image
+	$ export IMG_FNAME=path/to/image
 	$ laundry-symbol-reader 
 
 Docker
