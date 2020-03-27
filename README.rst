@@ -122,7 +122,7 @@ docker:
 .. code-block:: sh
 
 	$ docker container run --tty --interactive --volume $PWD:$PWD	\
-		--env IMG_FNAME=$PWD/2.jpeg laundrysymbolreader/reader
+		--env IMG_FNAME=$PWD/path/to/image laundrysymbolreader/reader
 
 script:
 .......
@@ -135,4 +135,4 @@ script:
 	$ chmod +x laundry-symbol-reader-dk
 
 	## run the script:
-	$ ./laundry-symbol-reader-dk relative/path/to/image
+	$ ./laundry-symbol-reader-dk path/to/image
