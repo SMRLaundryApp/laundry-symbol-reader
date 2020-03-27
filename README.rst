@@ -4,8 +4,8 @@ Laundry symbol reader
 =====================
 
 
-Installing prerequisites:
-=========================
+Prerequisites
+=============
 
 The program depends on libalx-base and libalx-cv (both from libalx_) being installed in the system, and those libraries depend on some other packages being installed in the system.  For those reasons, I recommend debian 11 (bullseye) as the operating system.  That's the OS used in the docker image.  Other compatible OSes include: manjaro.
 
@@ -32,8 +32,8 @@ Installing prerequisites on debian 11:
 	$ sudo make install-base install-cv -C libalx -j2
 
 
-Running the program:
-====================
+Running the program
+===================
 
 compile:
 --------
@@ -54,15 +54,47 @@ Before compiling you may want to modify the value of the variable ``dbg`` in the
 	## install
 	$ sudo make install -j2
 
-run (docker):
--------------
-.. code-block:: sh
-
-	$ ./laundry-symbol-reader-dk relative/path/to/image.extension
-
-run (non docker):
------------------
+run:
+----
 .. code-block:: sh
 
 	$ export IMG_FNAME=relative/path/to/image.extension
 	$ laundry-symbol-reader 
+
+Docker
+======
+
+If you don't have the system prerequisites above you can just run a docker container with the program already installed.
+This docker image is also used by the App.
+
+download:
+---------
+
+.. code-block:: sh
+
+	$ docker image pull laundrysymbolreader/reader
+
+run:
+----
+
+There are two options:  you can run the docker command directly, or you can run a script included in this repository (you need to download the script (or the full repository) for the second option).
+
+docker:
+.......
+
+.. code-block:: sh
+
+	$ ./laundry-symbol-reader-dk relative/path/to/image.extension
+
+script:
+.......
+
+.. code-block:: sh
+
+	## download the script:
+	$ wget https://raw.githubusercontent.com/SMRLaundryApp/laundry-symbol-reader/master/laundry-symbol-reader-dk
+	## Allow executing file as program:
+	$ chmod +x laundry-symbol-reader-dk
+
+	## run the script:
+	$ ./laundry-symbol-reader-dk relative/path/to/image
