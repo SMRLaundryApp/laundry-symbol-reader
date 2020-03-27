@@ -66,6 +66,7 @@ Docker
 
 If you don't have the system prerequisites above you can just run a docker container with the program already installed.
 This docker image is also used by the App.
+The only drawback is that you don't have a display; the only output is text.
 
 download:
 ---------
