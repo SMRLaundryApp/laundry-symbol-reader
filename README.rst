@@ -58,7 +58,7 @@ run:
 ----
 .. code-block:: sh
 
-	$ export IMG_FNAME=relative/path/to/image.extension
+	$ export IMG_FNAME=relative/path/to/image
 	$ laundry-symbol-reader 
 
 Docker
@@ -85,7 +85,7 @@ docker:
 
 .. code-block:: sh
 
-	$ ./laundry-symbol-reader-dk relative/path/to/image.extension
+	$ ./laundry-symbol-reader-dk relative/path/to/image
 
 script:
 .......
