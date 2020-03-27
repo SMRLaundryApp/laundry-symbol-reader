@@ -42,13 +42,17 @@ Before compiling you may want to modify the value of the variable ``dbg`` in the
 
 .. code-block:: sh
 
-	$ [make clean &&] make
+	## download the code:
+	$ git clone https://github.com/SMRLaundryApp/laundry-symbol-reader.git
 
-install:
---------
-.. code-block:: sh
+	## optional: clean the repository
+	$ make clean
 
-	$ sudo make install
+	## compile
+	$ make -j8
+
+	## install
+	$ sudo make install -j2
 
 run (docker):
 -------------
