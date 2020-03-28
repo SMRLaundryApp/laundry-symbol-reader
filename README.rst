@@ -9,11 +9,12 @@ Prerequisites
 
 The program depends on libalx-base and libalx-cv (both from libalx_) being
 installed in the system, and those libraries depend on some other packages
-being installed in the system.  For those reasons, I recommend debian 11
+being installed in the system.  For those reasons, I recommend debian_ 11
 (bullseye) as the operating system.  That's the OS used in the docker image.
 Other compatible OSes include: Manjaro_, Ubuntu_ 20.04 (focal).
 
 .. _libalx: https://github.com/alejandro-colomar/libalx
+.. _debian: https://www.debian.org/devel/debian-installer/
 .. _Manjaro: https://manjaro.org/
 .. _Ubuntu: http://cdimage.ubuntu.com/daily-live/current/
 
