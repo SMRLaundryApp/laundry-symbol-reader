@@ -16,18 +16,20 @@ MAKEFLAGS += --no-print-directory
 
 MAIN_DIR	= $(CURDIR)
 
+BIN_DIR		= $(CURDIR)/bin
+BUILD_DIR	= $(CURDIR)/build
+MK_DIR		= $(CURDIR)/mk
 SRC_DIR		= $(CURDIR)/src
 SHARE_DIR	= $(CURDIR)/share
-MK_DIR		= $(CURDIR)/mk
-BUILD_DIR	= $(CURDIR)/build
 
 INSTALL_BIN_DIR		= /usr/local/bin
 INSTALL_SHARE_DIR	= /usr/local/share
 
 export	MAIN_DIR
-export	SRC_DIR
-export	MK_DIR
+
 export	BUILD_DIR
+export	MK_DIR
+export	SRC_DIR
 
 ################################################################################
 # Make variables (CC, etc...)
@@ -74,7 +76,15 @@ all:
 .PHONY: install
 install: | inst-bin
 install: | inst-share
+install: | inst-scripts
 
+.PHONY: inst-scripts
+inst-scripts:
+	$(Q)chmod +x		$(BIN_DIR)/*
+	$(Q)mkdir -p		$(DESTDIR)/$(INSTALL_BIN_DIR)/
+	@echo	"	CP -rf	$(DESTDIR)/$(INSTALL_BIN_DIR)/*"
+	$(Q)cp  -r -f $(v)	$(BIN_DIR)/*				\
+					$(DESTDIR)/$(INSTALL_BIN_DIR)/
 
 .PHONY: inst-bin
 inst-bin:
