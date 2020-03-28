@@ -113,18 +113,18 @@ There are two options:  you can run the docker command directly, or you can
 run a script included in this repository (you need to download the script (or
 the full repository) for the second option).
 
-Both variants require that the image used is in a subdirectory contained by the
-`$PWD`.  The reason is that docker will mount the `$PWD` inside the container
-to have access to the image.  It can be modified by modifying the line that
-runs docker.
-
 docker:
 .......
 
 .. code-block:: sh
 
-	$ docker container run --tty --interactive --volume $PWD:$PWD	\
-		--env IMG_FNAME=$PWD/path/to/image laundrysymbolreader/reader
+	$ path=path/to/image
+	$ dir=$(realpath $(dirname ${path}))
+	$ fname=$(basename ${path})
+	$ docker container run --tty --interactive			\
+		--volume ${dir}:${dir}					\
+		--env IMG_FNAME=${dir}/${fname}				\
+		laundrysymbolreader/reader
 
 script:
 .......

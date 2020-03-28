@@ -12,30 +12,19 @@
 ################################################################################
 #	functions							       #
 ################################################################################
-wrap_env()
-{
-	env="--env IMG_FNAME=${PWD}/$1"
-}
 
-wrap_vol()
-{
-	vol="--volume ${PWD}:${PWD}"
-}
-
-wrap_options()
-{
-	opt="--tty --interactive $1 $2"
-}
 
 ################################################################################
 #	main								       #
 ################################################################################
 main()
 {
+	dir=$(realpath $(dirname "$1"))
+	fname=$(basename "$1")
 
-	wrap_vol
-	wrap_env	"$1"
-	wrap_options	"${vol}" "${env}"
+	vol="--volume ${dir}:${dir}"
+	env="--env IMG_FNAME=${dir}/${fname}"
+	opt="--tty --interactive ${vol} ${env}"
 
 	cmd="docker container run	${opt}	laundrysymbolreader/reader"
 	${cmd}
