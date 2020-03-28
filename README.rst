@@ -108,7 +108,7 @@ download:
 	## download the latest docker image
 	$ docker image pull laundrysymbolreader/reader
 	## download the script:
-	$ wget https://raw.githubusercontent.com/SMRLaundryApp/laundry-symbol-reader/master/laundry-symbol-reader-dk
+	$ wget https://raw.githubusercontent.com/SMRLaundryApp/laundry-symbol-reader/master/bin/laundry-symbol-reader-dk
 	## Allow executing file as program:
 	$ chmod +x laundry-symbol-reader-dk
 
