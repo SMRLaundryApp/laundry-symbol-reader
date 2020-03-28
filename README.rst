@@ -98,43 +98,23 @@ If you don't have the system prerequisites above you can just run a docker
 container with the program already installed.
 This docker image is also used by the App.
 The only drawback is that you don't have a display; the only output is text.
+There is a script to run the docker container easily.
 
 download:
 ---------
 
 .. code-block:: sh
 
+	## download the latest docker image
 	$ docker image pull laundrysymbolreader/reader
-
-run:
-----
-
-There are two options:  you can run the docker command directly, or you can
-run a script included in this repository (you need to download the script (or
-the full repository) for the second option).
-
-docker:
-.......
-
-.. code-block:: sh
-
-	$ path=path/to/image
-	$ dir=$(realpath $(dirname ${path}))
-	$ fname=$(basename ${path})
-	$ docker container run --tty --interactive			\
-		--volume ${dir}:${dir}					\
-		--env IMG_FNAME=${dir}/${fname}				\
-		laundrysymbolreader/reader
-
-script:
-.......
-
-.. code-block:: sh
-
 	## download the script:
 	$ wget https://raw.githubusercontent.com/SMRLaundryApp/laundry-symbol-reader/master/laundry-symbol-reader-dk
 	## Allow executing file as program:
 	$ chmod +x laundry-symbol-reader-dk
 
-	## run the script:
+run:
+.......
+
+.. code-block:: sh
+
 	$ ./laundry-symbol-reader-dk path/to/image
