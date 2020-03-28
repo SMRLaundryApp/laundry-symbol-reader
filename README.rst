@@ -118,3 +118,6 @@ run:
 .. code-block:: sh
 
 	$ ./laundry-symbol-reader-dk path/to/image
+
+The script can allso be installed in the system with `make inst-scripts`.
+
