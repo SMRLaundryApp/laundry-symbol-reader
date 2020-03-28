@@ -113,7 +113,7 @@ download:
 	$ chmod +x laundry-symbol-reader-dk
 
 run:
-.......
+----
 
 .. code-block:: sh
 
