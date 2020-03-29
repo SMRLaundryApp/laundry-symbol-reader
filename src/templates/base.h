@@ -15,8 +15,8 @@
  ******************************************************************************/
 #include <stdint.h>
 
-#include <libalx/base/compiler/size.h>
-#include <libalx/extra/cv/types.h>
+#include <libalx/base/compiler.h>
+#include <libalx/extra/cv/cv.h>
 
 
 /******************************************************************************

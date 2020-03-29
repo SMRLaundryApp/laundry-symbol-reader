@@ -15,9 +15,9 @@
 #include <stdio.h>
 
 #define ALX_NO_PREFIX
-#include <libalx/base/compiler/size.h>
-#include <libalx/base/errno/perror.h>
-#include <libalx/base/stdlib/minimum.h>
+#include <libalx/base/compiler.h>
+#include <libalx/base/errno.h>
+#include <libalx/base/stdlib.h>
 #include <libalx/extra/cv/cv.h>
 
 #include "dbg.h"
