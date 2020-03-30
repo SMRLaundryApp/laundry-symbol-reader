@@ -12,9 +12,9 @@
 #include <time.h>
 
 #define ALX_NO_PREFIX
-#include <libalx/base/compiler/size.h>
-#include <libalx/base/stdio/printf/b.h>
-#include <libalx/base/stdlib/getenv/getenv_s.h>
+#include <libalx/base/compiler.h>
+#include <libalx/base/stdio.h>
+#include <libalx/base/stdlib.h>
 #include <libalx/extra/cv/cv.h>
 
 #include "dbg.h"

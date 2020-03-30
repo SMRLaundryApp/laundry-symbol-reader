@@ -15,10 +15,9 @@
 #include <stdio.h>
 
 #define ALX_NO_PREFIX
-#include <libalx/base/compiler/size.h>
-#include <libalx/base/stdint/mask/bit.h>
-#include <libalx/base/stdint/mask/field.h>
-#include <libalx/base/stdio/printf/sbprintf.h>
+#include <libalx/base/compiler.h>
+#include <libalx/base/stdint.h>
+#include <libalx/base/stdio.h>
 #include <libalx/extra/cv/cv.h>
 
 #include "dbg.h"

@@ -16,9 +16,9 @@
 #include <stdbool.h>
 
 #define ALX_NO_PREFIX
-#include <libalx/base/errno/perror.h>
-#include <libalx/base/stdio/seekc.h>
-#include <libalx/extra/cv/highgui/window.h>
+#include <libalx/base/errno.h>
+#include <libalx/base/stdio.h>
+#include <libalx/extra/cv/cv.h>
 
 
 /******************************************************************************
