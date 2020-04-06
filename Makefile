@@ -45,7 +45,7 @@ export	SZ
 # cflags
 CFLAGS_STD	= -std=gnu17
 CFLAGS_W	= -Wall -Wextra -Wno-format -Werror
-CFLAGS_O	= -O3 -march=native -flto
+CFLAGS_O	= -O3 -march=x86-64 -flto
 CFLAGS_PKG	= `pkg-config --cflags libalx-base`
 CFLAGS_PKG	+= `pkg-config --cflags libalx-cv`
 CFLAGS		= $(CFLAGS_W) $(CFLAGS_O) $(CFLAGS_PKG)
