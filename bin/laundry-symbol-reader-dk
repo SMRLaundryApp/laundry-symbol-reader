@@ -24,7 +24,7 @@ main()
 
 	vol="--volume ${dir}:${dir}"
 	env="--env IMG_FNAME=${dir}/${fname}"
-	opt="--tty --interactive ${vol} ${env}"
+	opt="--tty --interactive --rm ${vol} ${env}"
 
 	cmd="docker container run	${opt}	laundrysymbolreader/reader"
 	${cmd}
