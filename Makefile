@@ -56,6 +56,7 @@ export	CFLAGS
 # libs
 LIBS	= -flto
 LIBS  	+= -fuse-linker-plugin
+LIBS  	+= -Wno-error
 LIBS    += `pkg-config --libs libalx-cv`
 LIBS	+= `pkg-config --libs libalx-base`
 
