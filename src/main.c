@@ -9,7 +9,6 @@
  ******************************************************************************/
 #include <stddef.h>
 #include <stdio.h>
-#include <time.h>
 
 #define ALX_NO_PREFIX
 #include <libalx/base/compiler.h>
@@ -52,16 +51,12 @@ int	main	(void)
 {
 	char		fname[FILENAME_MAX];
 	img_s		*img;
-	clock_t		time_0;
-	clock_t		time_1;
-	double		time_tot;
 	uint32_t	code;
 	int		status;
 
 	status	= 1;
 	if (init(fname, &img))
 		return	1;
-	time_0 = clock();
 
 	status++;
 	if (load_templates())
@@ -97,10 +92,6 @@ int	main	(void)
 			goto err;
 		printf("0b%'.16b\n", code);
 	}
-
-	time_1 = clock();
-	time_tot = ((double) time_1 - time_0) / CLOCKS_PER_SEC;
-	dbg_printf(1, "Total time:	%5.3lf s;\n", time_tot);
 
 	alx_cv_imwrite(img, "/tmp/wash.png");
 
