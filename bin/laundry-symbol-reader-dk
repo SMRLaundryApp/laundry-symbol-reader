@@ -19,14 +19,15 @@
 ################################################################################
 main()
 {
-	dir=$(realpath $(dirname "$1"))
-	fname=$(basename "$1")
+	img=$1
+	dir=$(realpath $(dirname ${img}))
+	fname=$(basename ${img})
 
-	vol="--volume ${dir}:${dir}"
-	env="--env IMG_FNAME=${dir}/${fname}"
+	vol="--volume ${dir}:/tmp/img"
+	env="--env IMG_FNAME=/tmp/img/${fname}"
 	opt="--tty --interactive --rm ${vol} ${env}"
 
-	cmd="docker container run	${opt}	laundrysymbolreader/reader"
+	export	cmd="docker container run ${opt} laundrysymbolreader/reader"
 	${cmd}
 }
 
