@@ -24,19 +24,15 @@ Installing prerequisites on debian 11:
 .. code-block:: sh
 
 	## install build tools:
-	$ sudo apt-get install gcc g++ make git pkg-config
-
+	# apt-get install gcc g++ make git pkg-config
 	## install libraries which libalx depends on:
-	$ sudo apt-get install libbsd-dev libgsl-dev libopencv-dev
-
+	# apt-get install libbsd-dev libgsl-dev libopencv-dev
 	## download libalx
 	$ git clone https://github.com/alejandro-colomar/libalx.git
-
 	## compile libalx
 	$ make base cv -C libalx -j8
-
 	## install libalx
-	$ sudo make install-base install-cv -C libalx -j2
+	# make install-base install-cv -C libalx -j2
 
 Installing prerequisites on manjaro:
 --------------------------------------
@@ -44,19 +40,15 @@ Installing prerequisites on manjaro:
 .. code-block:: sh
 
 	## install build tools:
-	$ sudo pacman -S gcc make git pkgconf
-
+	# pacman -S gcc make git pkgconf
 	## install libraries which libalx depends on:
-	$ sudo pacman -S libbsd gsl opencv
-
+	# pacman -S libbsd gsl opencv
 	## download libalx
 	$ git clone https://github.com/alejandro-colomar/libalx.git
-
 	## compile libalx
 	$ make base cv -C libalx -j8
-
 	## install libalx
-	$ sudo make install-base install-cv -C libalx -j2
+	# make install-base install-cv -C libalx -j2
 
 
 Running the program
@@ -76,15 +68,12 @@ debugging information.
 
 	## download the code:
 	$ git clone https://github.com/SMRLaundryApp/laundry-symbol-reader.git
-
 	## optional: clean the repository
 	$ make clean
-
 	## compile
 	$ make -j8
-
 	## install
-	$ sudo make install -j2
+	# make install -j2
 
 run:
 ----
