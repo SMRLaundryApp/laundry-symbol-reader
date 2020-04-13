@@ -9,14 +9,16 @@ Prerequisites
 
 The program depends on libalx-base and libalx-cv (both from libalx_) being
 installed in the system, and those libraries depend on some other packages
-being installed in the system.  For those reasons, I recommend debian_ 11
-(bullseye) as the operating system.  That's the OS used in the docker image.
-Other compatible OSes include: Manjaro_, Ubuntu_ 20.04 (focal).
+being installed in the system.  For those reasons, I recommend
+`debian 11 (bullseye)`_ as the operating system.  That's the OS used in the
+`docker image`_.  Other compatible OSes include: Manjaro_,
+`Ubuntu 20.04 (focal)`_.
 
-.. _libalx: https://github.com/alejandro-colomar/libalx
-.. _debian: https://www.debian.org/devel/debian-installer/
-.. _Manjaro: https://manjaro.org/
-.. _Ubuntu: http://cdimage.ubuntu.com/daily-live/current/
+.. _libalx:			https://github.com/alejandro-colomar/libalx
+.. _`debian 11 (bullseye)`:	https://www.debian.org/devel/debian-installer/
+.. _Manjaro:			https://manjaro.org/
+.. _`Ubuntu 20.04 (focal)`:	http://cdimage.ubuntu.com/daily-live/current/
+.. _`docker image`:	https://hub.docker.com/r/laundrysymbolreader/reader
 
 Installing prerequisites on debian 11:
 --------------------------------------
@@ -24,15 +26,15 @@ Installing prerequisites on debian 11:
 .. code-block:: sh
 
 	## install build tools:
-	# apt-get install gcc g++ make git pkg-config
+	$ sudo apt-get install gcc g++ make git pkg-config
 	## install libraries which libalx depends on:
-	# apt-get install libbsd-dev libgsl-dev libopencv-dev
+	$ sudo apt-get install libbsd-dev libgsl-dev libopencv-dev
 	## download libalx
 	$ git clone https://github.com/alejandro-colomar/libalx.git
 	## compile libalx
 	$ make base cv -C libalx -j8
 	## install libalx
-	# make install-base install-cv -C libalx -j2
+	$ sudo make install-base install-cv -C libalx -j2
 
 Installing prerequisites on manjaro:
 --------------------------------------
@@ -40,15 +42,15 @@ Installing prerequisites on manjaro:
 .. code-block:: sh
 
 	## install build tools:
-	# pacman -S gcc make git pkgconf
+	$ sudo pacman -S gcc make git pkgconf
 	## install libraries which libalx depends on:
-	# pacman -S libbsd gsl opencv
+	$ sudo pacman -S libbsd gsl opencv
 	## download libalx
 	$ git clone https://github.com/alejandro-colomar/libalx.git
 	## compile libalx
 	$ make base cv -C libalx -j8
 	## install libalx
-	# make install-base install-cv -C libalx -j2
+	$ sudo make install-base install-cv -C libalx -j2
 
 
 Running the program
@@ -68,12 +70,10 @@ debugging information.
 
 	## download the code:
 	$ git clone https://github.com/SMRLaundryApp/laundry-symbol-reader.git
-	## optional: clean the repository
-	$ make clean
 	## compile
-	$ make -j8
+	$ make -C laundry-symbol-reader -j8
 	## install
-	# make install -j2
+	$ sudo make install -C laundry-symbol-reader -j2
 
 run:
 ----
@@ -91,24 +91,24 @@ This docker image is also used by the App.
 The only drawback is that you don't have a display; the only output is text.
 There is a script to run the docker container easily.
 
-download:
----------
+install:
+--------
 
 .. code-block:: sh
 
 	## download the latest docker image
 	$ docker image pull laundrysymbolreader/reader
-	## download the script:
-	$ wget https://raw.githubusercontent.com/SMRLaundryApp/laundry-symbol-reader/master/bin/laundry-symbol-reader-dk
-	## Allow executing file as program:
-	$ chmod +x laundry-symbol-reader-dk
+	## clone the repository:
+	$ git clone https://github.com/SMRLaundryApp/laundry-symbol-reader.git
+	## install script
+	$ make inst-scripts -C laundry-symbol-reader
+	## remove the repository clone:
+	$ rm -rf laundry-symbol-reader
 
 run:
 ----
 
 .. code-block:: sh
 
-	$ ./laundry-symbol-reader-dk path/to/image
-
-The script can allso be installed in the system with ``make inst-scripts``.
+	$ laundry-symbol-reader-dk path/to/image
 
