@@ -65,9 +65,10 @@ Running the program
 compile:
 --------
 
-Before compiling you may want to modify the value of the macro ``dbg`` in the
-file ``src/dbg.h`` to some higher value to see some images and text of the
-process.  The value should be between 0 and 4, (values lower than 0 will act as
+Before compiling you may want to modify the value of the macros ``DBG`` and
+``DBG_SHOW_WAIT`` in the file ``src/dbg.h`` to some higher value to see some
+images and text of the process, and to be able to stop the program at each
+image.  The value should be between 0 and 4, (values lower than 0 will act as
 0, and values greater than 4 will act as 4).  The higher the value, the more
 debugging information.
 
