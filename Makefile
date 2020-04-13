@@ -54,11 +54,20 @@ export	CFLAGS
 
 ################################################################################
 # libs
-LIBS	= -flto
-LIBS  	+= -fuse-linker-plugin
-LIBS  	+= -Wno-error
-LIBS    += `pkg-config --libs libalx-cv`
-LIBS	+= `pkg-config --libs libalx-base`
+
+LIBS_OPT	= -O3
+LIBS_OPT       += -flto
+LIBS_OPT       += -fuse-linker-plugin
+
+LIBS_PKG_A	+= `pkg-config --libs --static libalx-base`
+
+LIBS_PKG_SO	+= `pkg-config --libs libalx-cv`
+
+LIBS_PKG	= -Wl,-Bstatic $(LIBS_PKG_A) -Wl,-Bdynamic $(LIBS_PKG_SO)
+
+LIBS		= -Wno-error
+LIBS           += $(LIBS_OPT)
+LIBS           += $(LIBS_PKG)
 
 export	LIBS
 
