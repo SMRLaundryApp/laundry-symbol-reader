@@ -101,7 +101,7 @@ install:
 	## clone the repository:
 	$ git clone https://github.com/SMRLaundryApp/laundry-symbol-reader.git
 	## install script
-	$ make inst-scripts -C laundry-symbol-reader
+	$ sudo make inst-scripts -C laundry-symbol-reader
 	## remove the repository clone:
 	$ rm -rf laundry-symbol-reader
 
