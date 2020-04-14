@@ -109,6 +109,7 @@ extern	const char *const	t_base_meaning[T_BASE_QTY];
 extern	const char *const	t_base_fnames[T_BASE_QTY];
 extern	const char *const	t_inner_meaning[T_INNER_MEANING_QTY];
 extern	const char *const	t_inner_fnames[T_INNER_QTY];
+extern	const char *const	t_outer_meaning[T_OUTER_MEANING_QTY];
 
 extern	img_s	*base_templates[ARRAY_SIZE(t_base_fnames)];
 extern	img_s	*base_templates_not[ARRAY_SIZE(t_base_fnames)];
@@ -123,6 +124,7 @@ void	deinit_templates(void);
 int	load_templates	(void);
 int	match_t_inner	(img_s *restrict sym, uint32_t *code);
 int	match_t_outer	(img_s *restrict sym, uint32_t *code);
+void	print_code	(uint32_t code);
 
 
 /******************************************************************************
