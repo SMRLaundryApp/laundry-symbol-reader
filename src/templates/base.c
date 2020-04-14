@@ -73,7 +73,7 @@ int	match_t_base	(img_s *restrict sym, uint32_t *code, ptrdiff_t i)
 	match	= -INFINITY;
 	BITFIELD_SET(code, CODE_BASE_POS, CODE_BASE_LEN);
 
-	m = alx_cv_compare_bitwise(base, base_templates[i], 2);	dbg_printf(2, "match: %.5lf\n", m);
+	m = alx_cv_compare_bitwise(base, base_templates[i], 2);	dbg_printf(4, "match: %.5lf\n", m);
 	alx_cv_clone(tmp, base);
 	alx_cv_resize_2largest(tmp, base_templates[i]);
 	alx_cv_xor_2ref(tmp, base_templates[i]);		dbg_show(2, tmp);
@@ -83,7 +83,7 @@ int	match_t_base	(img_s *restrict sym, uint32_t *code, ptrdiff_t i)
 		match	= m;
 	}
 
-	m = alx_cv_compare_bitwise(base, base_templates_not[i], 2);	dbg_printf(2, "match: %.5lf\n", m);
+	m = alx_cv_compare_bitwise(base, base_templates_not[i], 2);	dbg_printf(4, "match: %.5lf\n", m);
 	alx_cv_clone(tmp, base);
 	alx_cv_resize_2largest(tmp, base_templates_not[i]);
 	alx_cv_xor_2ref(tmp, base_templates_not[i]);		dbg_show(2, tmp);
@@ -94,10 +94,10 @@ int	match_t_base	(img_s *restrict sym, uint32_t *code, ptrdiff_t i)
 	}
 
 	if (BIT_READ(*code, CODE_Y_N_POS)) {
-								dbg_printf(1, "%s\n", t_base_meaning[i]);
+								dbg_printf(4, "%s\n", t_base_meaning[i]);
 								dbg_show(1, base_templates[i]);
 	} else {
-								dbg_printf(1, "%s not\n", t_base_meaning[i]);
+								dbg_printf(4, "%s not\n", t_base_meaning[i]);
 								dbg_show(1, base_templates_not[i]);
 	}
 

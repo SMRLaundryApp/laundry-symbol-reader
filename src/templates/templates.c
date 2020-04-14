@@ -210,17 +210,17 @@ int	match_t_inner	(img_s *restrict sym, uint32_t *code)
 	BITFIELD_WRITE(code, CODE_IN_POS, CODE_IN_LEN, 0);
 	for (ptrdiff_t i = 0; i < ARRAY_SSIZE(inner_templates); i++) {
 		m	= alx_cv_compare_bitwise(in, inner_templates[i], 2);
-								dbg_printf(2, "match: %.4lf\n", m);
+								dbg_printf(4, "match: %.4lf\n", m);
 		if (m >= match) {
 			BITFIELD_WRITE(code, CODE_IN_POS, CODE_IN_LEN, i);
 			match		= m;
-								dbg_printf(1, "%s\n", t_inner_fnames[i]);
+								dbg_printf(4, "%s\n", t_inner_fnames[i]);
 		}
 	}
 								dbg_show(1, inner_templates[BITFIELD_READ(*code, CODE_IN_POS, CODE_IN_LEN)]);
 
 	t_inner_fix_code(code);
-								dbg_printf(1, "%s\n", t_inner_meaning[BITFIELD_READ(*code, CODE_IN_POS, CODE_IN_LEN)]);
+								dbg_printf(4, "%s\n", t_inner_meaning[BITFIELD_READ(*code, CODE_IN_POS, CODE_IN_LEN)]);
 
 	/* deinit */
 	status	= 0;
@@ -251,7 +251,7 @@ int	match_t_outer	(img_s *restrict sym, uint32_t *code)
 	/* Find inner match */
 	status--;
 	if (symbol_outer(sym, out))
-		goto err;					dbg_show(2, out);
+		goto err;					dbg_show(1, out);
 	status--;
 
 	alx_cv_contours(out, conts);
@@ -350,13 +350,30 @@ void	t_inner_fix_code	(uint32_t *code)
 		BITFIELD_SET(code, CODE_IN_POS, CODE_IN_LEN);
 		break;
 	case T_BASE_PRO:
+		switch (in_code) {
+		case T_INNER_FNAME_A ... T_INNER_FNAME_W:
+			in_code	+= T_INNER_A - T_INNER_FNAME_A;
+			BITFIELD_WRITE(code, CODE_IN_POS, CODE_IN_LEN, in_code);
+			break;
+		default:
+			BITFIELD_WRITE(code, CODE_IN_POS, CODE_IN_LEN, 0);
+			break;
+		}
+		break;
 		in_code	+= T_INNER_A - T_INNER_FNAME_A;
 		BITFIELD_WRITE(code, CODE_IN_POS, CODE_IN_LEN, in_code);
 		break;
 	case T_BASE_DRY:
 	case T_BASE_IRON:
-		in_code	+= T_INNER_LO_T - T_INNER_FNAME_1_DOT;
-		BITFIELD_WRITE(code, CODE_IN_POS, CODE_IN_LEN, in_code);
+		switch (in_code) {
+		case T_INNER_FNAME_1_DOT ... T_INNER_FNAME_3_DOT:
+			in_code	+= T_INNER_LO_T - T_INNER_FNAME_1_DOT;
+			BITFIELD_WRITE(code, CODE_IN_POS, CODE_IN_LEN, in_code);
+			break;
+		default:
+			BITFIELD_WRITE(code, CODE_IN_POS, CODE_IN_LEN, 0);
+			break;
+		}
 		break;
 	case T_BASE_WASH:
 		switch (in_code) {
@@ -372,9 +389,8 @@ void	t_inner_fix_code	(uint32_t *code)
 			in_code	+= T_INNER_95 - T_INNER_FNAME_95;
 			BITFIELD_WRITE(code, CODE_IN_POS, CODE_IN_LEN, in_code);
 			break;
-		case T_INNER_FNAME_A ... T_INNER_FNAME_W:
-			in_code	+= T_INNER_A - T_INNER_FNAME_A;
-			BITFIELD_WRITE(code, CODE_IN_POS, CODE_IN_LEN, in_code);
+		default:
+			BITFIELD_WRITE(code, CODE_IN_POS, CODE_IN_LEN, 0);
 			break;
 		}
 		break;

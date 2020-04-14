@@ -121,7 +121,7 @@ int	find_symbols_vertically		(img_s *img)
 	alx_cv_and_2ref(bkgd, tmp);				dbg_show(3, bkgd);
 	alx_cv_invert(tmp);					dbg_show(3, tmp);
 	alx_cv_and_2ref(clean, tmp);				dbg_show(3, clean);
-	alx_cv_or_2ref(clean, bkgd);				dbg_show(2, clean);
+	alx_cv_or_2ref(clean, bkgd);				dbg_show(3, clean);
 
 	/* Find syms */
 	status--;
