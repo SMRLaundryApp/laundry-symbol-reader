@@ -66,9 +66,9 @@ const char *const	t_inner_meaning[] = {
 	"70",
 	"95",
 	"any solvent",
-	"petroleum only",
-	"wet clean",
-	"any solvent except TCE"
+	"HCS only",
+	"PCE only",
+	"wet clean"
 };
 
 const char *const	t_inner_fnames[] = {
