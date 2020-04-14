@@ -103,8 +103,8 @@ int	extract_symbols	(img_s *restrict img)
 	alx_cv_adaptive_thr(tmp, ALX_CV_ADAPTIVE_THRESH_GAUSSIAN,
 			ALX_CV_THRESH_BINARY_INV, h / 2, 5);	dbg_show(3, tmp);
 	alx_cv_holes_fill(tmp);
-	alx_cv_erode_dilate(tmp, h / 15);				dbg_show(2, tmp);
-	alx_cv_dilate_erode(tmp, h / 15);				dbg_show(2, tmp);
+	alx_cv_erode_dilate(tmp, h / 15);			dbg_show(3, tmp);
+	alx_cv_dilate_erode(tmp, h / 15);			dbg_show(3, tmp);
 	alx_cv_contours(tmp, conts);
 	alx_cv_sort_conts_lr(conts);
 	if (alx_cv_extract_conts(conts, NULL, &nsyms))
@@ -180,31 +180,31 @@ int	clean_symbol	(img_s *img)
 	alx_cv_threshold(mask, ALX_CV_THRESH_BINARY_INV, ALX_CV_THR_OTSU);
 								dbg_show(3, mask);
 	alx_cv_dilate(mask, 2);					dbg_show(3, mask);
-	alx_cv_holes_fill(mask);				dbg_show(2, mask);
+	alx_cv_holes_fill(mask);				dbg_show(3, mask);
 	alx_cv_contours(mask, conts);
 	alx_cv_extract_imgdata(mask, NULL, &w, &h, NULL, NULL, NULL);
 	if (alx_cv_conts_closest(NULL, &i, conts, w / 2, h / 2, NULL))
 		goto err;
-	alx_cv_contour_mask(mask, conts, i);			dbg_show(2, mask);
+	alx_cv_contour_mask(mask, conts, i);			dbg_show(3, mask);
 	alx_cv_dilate(mask, 2);					dbg_show(3, mask);
 
 	/* Find BKGD */
-	alx_cv_clone(bkgd, img);				dbg_show(2, bkgd);
-	alx_cv_median(bkgd);					dbg_show(2, bkgd);
-	alx_cv_invert(mask);					dbg_show(2, mask);
-	alx_cv_and_2ref(bkgd, mask);				dbg_show(2, bkgd);
+	alx_cv_clone(bkgd, img);				dbg_show(3, bkgd);
+	alx_cv_median(bkgd);					dbg_show(3, bkgd);
+	alx_cv_invert(mask);					dbg_show(3, mask);
+	alx_cv_and_2ref(bkgd, mask);				dbg_show(3, bkgd);
 
 	/* Clean symbol */
-	alx_cv_invert(mask);					dbg_show(2, mask);
-	alx_cv_and_2ref(img, mask);				dbg_show(2, img);
-	alx_cv_or_2ref(img, bkgd);				dbg_show(2, img);
+	alx_cv_invert(mask);					dbg_show(3, mask);
+	alx_cv_and_2ref(img, mask);				dbg_show(3, img);
+	alx_cv_or_2ref(img, bkgd);				dbg_show(3, img);
 
 	/* Threshold */
 	alx_cv_normalize(img);					dbg_show(3, img);
 	alx_cv_smooth(img, ALX_CV_SMOOTH_MEDIAN, 3);		dbg_show(3, img);
 	w	= ALX_MIN(w, h);
 	alx_cv_adaptive_thr(img, ALX_CV_ADAPTIVE_THRESH_GAUSSIAN,
-			ALX_CV_THRESH_BINARY_INV, w / 2, 25);	dbg_show(3, img);
+			ALX_CV_THRESH_BINARY_INV, w / 2, 25);	dbg_show(1, img);
 
 	/* deinit */
 	status	= 0;
@@ -243,7 +243,7 @@ int	symbol_base	(const img_s *restrict sym, img_s *restrict base)
 	alx_cv_contour_mask(mask, conts, i);			dbg_show(3, mask);
 	alx_cv_and_2ref(base, mask);				dbg_show(3, base);
 	alx_cv_bounding_rect(rect, cont);
-	alx_cv_roi_set(base, rect);				dbg_show(2, base);
+	alx_cv_roi_set(base, rect);				dbg_show(1, base);
 
 	/* deinit */
 	status	= 0;
@@ -280,7 +280,7 @@ int	symbol_inner	(const img_s *restrict sym, img_s *restrict in)
 	if (alx_cv_conts_largest_a(&cont, NULL, conts))
 		goto err;
 	alx_cv_bounding_rect(rect, cont);
-	alx_cv_roi_set(in, rect);				dbg_show(2, in);
+	alx_cv_roi_set(in, rect);				dbg_show(1, in);
 
 
 	/* deinit */
@@ -316,7 +316,7 @@ int	symbol_outer	(const img_s *restrict sym, img_s *restrict out)
 	alx_cv_contour_mask(mask, conts, i);			dbg_show(3, mask);
 	alx_cv_invert(mask);					dbg_show(3, mask);
 	alx_cv_and_2ref(out, mask);				dbg_show(3, out);
-	alx_cv_erode_dilate(out, 1);				dbg_show(2, out);
+	alx_cv_erode_dilate(out, 1);				dbg_show(1, out);
 
 	/* deinit */
 	status	= 0;
