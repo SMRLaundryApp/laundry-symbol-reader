@@ -95,8 +95,11 @@ int	main	(void)
 
 	alx_cv_imwrite(img, "/tmp/wash.png");
 
-	status	= 0;
-err:	deinit(img);
+	deinit(img);
+	return	0;
+err:
+	fprintf(stderr, "Error reading label\n");
+	deinit(img);
 	return	status;
 }
 
