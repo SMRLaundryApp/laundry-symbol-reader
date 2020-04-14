@@ -122,7 +122,6 @@ int	init	(char fname[static restrict FILENAME_MAX],
 		goto err1;
 	if (DBG)
 		alx_cv_named_window("dbg", ALX_CV_WINDOW_NORMAL);
-	printf_b_init();
 
 	return	0;
 
