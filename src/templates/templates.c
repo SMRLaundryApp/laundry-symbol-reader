@@ -265,6 +265,34 @@ err0:	alx_cv_deinit_img(out);
 	return	status;
 }
 
+void	print_code	(uint32_t code)
+{
+	ptrdiff_t	base;
+	bool		y_n;
+	ptrdiff_t	inner;
+	ptrdiff_t	outer;
+
+	base	= BITFIELD_READ(code, CODE_BASE_POS, CODE_BASE_LEN);
+	y_n	= BIT_READ(code, CODE_Y_N_POS);
+	inner	= BITFIELD_READ(code, CODE_IN_POS, CODE_IN_LEN);
+	outer	= BITFIELD_READ(code, CODE_OUT_POS, CODE_OUT_LEN);
+
+	printf("%s", t_base_meaning[base]);
+	if (!y_n) {
+		printf(" not\n");
+	} else {
+		if (inner || outer)
+			printf(": ");
+		if (inner)
+			printf("%s", t_inner_meaning[inner]);
+		if (inner && outer)
+			printf(", ");
+		if (outer)
+			printf("%s", t_outer_meaning[outer]);
+		fputc('\n', stdout);
+	}
+}
+
 
 /******************************************************************************
  ******* static function definitions ******************************************

@@ -90,7 +90,7 @@ int	main	(void)
 			goto err;
 		if (match_t_outer(symbols[i], &code) < 0)
 			goto err;
-		printf("0b%'.16b\n", code);
+		print_code(code);
 	}
 
 	alx_cv_imwrite(img, "/tmp/wash.png");
