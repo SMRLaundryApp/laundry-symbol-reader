@@ -79,8 +79,7 @@ run:
 ----
 .. code-block:: sh
 
-	$ export IMG_FNAME=path/to/image
-	$ laundry-symbol-reader 
+	$ laundry-symbol-reader <image>
 
 Docker
 ======
@@ -110,5 +109,5 @@ run:
 
 .. code-block:: sh
 
-	$ laundry-symbol-reader-dk path/to/image
+	$ laundry-symbol-reader-dk <image>
 
