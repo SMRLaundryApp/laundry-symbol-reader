@@ -24,11 +24,13 @@ main()
 	fname=$(basename ${img})
 
 	vol="--volume ${dir}:/tmp/img"
-	env="--env IMG_FNAME=/tmp/img/${fname}"
-	opt="--tty --interactive --rm ${vol} ${env}"
+	opt="--tty --interactive --rm ${vol}"
+	dk_img="laundrysymbolreader/reader"
+	arg="/tmp/img/${fname}"
+	cmd="laundry-symbol-reader ${arg}"
 
-	export	cmd="docker container run ${opt} laundrysymbolreader/reader"
-	${cmd}
+	dk="docker container run ${opt} ${dk_img} ${cmd}"
+	${dk}
 }
 
 ################################################################################

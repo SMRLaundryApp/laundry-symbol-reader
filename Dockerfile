@@ -47,7 +47,7 @@ RUN	make	install-base install-cv		-C libalx	-j 8	&& \
 COPY	--from=build /tmp/laundry-symbol-reader ./laundry-symbol-reader
 RUN	make	install		-C laundry-symbol-reader	-j 8	&& \
 	rm -rf	laundry-symbol-reader
-CMD	["laundry-symbol-reader"]
+CMD	["bash"]
 
-# docker container run --tty --interactive --volume $PWD:$PWD --env IMG_FNAME=$PWD/2.jpeg laundrysymbolreader/reader   
+# docker container run --rm --tty --interactive --volume $PWD:$PWD laundrysymbolreader/reader laundry-symbol-reader $PWD/2.jpeg  
 
