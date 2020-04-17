@@ -38,8 +38,7 @@
  ******* static functions (prototypes) ****************************************
  ******************************************************************************/
 static
-int	init	(char fname[static restrict FILENAME_MAX],
-		 img_s **restrict img);
+int	init	(img_s **restrict img);
 static
 void	deinit	(img_s *restrict img);
 
@@ -47,16 +46,20 @@ void	deinit	(img_s *restrict img);
 /******************************************************************************
  ******* main *****************************************************************
  ******************************************************************************/
-int	main	(void)
+int	main	(int argc, char *argv[])
 {
-	char		fname[FILENAME_MAX];
+	const char	*fname;
 	img_s		*img;
 	uint32_t	code;
 	int		status;
 
 	status	= 1;
-	if (init(fname, &img))
+	if (argc != 2)
 		return	1;
+	fname	= argv[1];
+	status++;
+	if (init(&img))
+		goto err0;
 
 	status++;
 	if (load_templates())
@@ -98,8 +101,9 @@ int	main	(void)
 	deinit(img);
 	return	0;
 err:
-	fprintf(stderr, "Error reading label\n");
 	deinit(img);
+err0:
+	fprintf(stderr, "Error reading label\n");
 	return	status;
 }
 
@@ -108,14 +112,11 @@ err:
  ******* static functions (definitions) ***************************************
  ******************************************************************************/
 static
-int	init	(char fname[static restrict FILENAME_MAX],
-		 img_s **restrict img)
+int	init	(img_s **restrict img)
 {
 
-	if (getenv_s(fname, FILENAME_MAX, ENV_IMG_FNAME))
-		return	-1;
 	if (alx_cv_init_img(img))
-		return	-2;
+		return	-1;
 	if (init_symbols())
 		goto err0;
 	if (init_templates())
@@ -127,7 +128,7 @@ int	init	(char fname[static restrict FILENAME_MAX],
 
 err1:	deinit_symbols();
 err0:	alx_cv_deinit_img(*img);
-	return	-2;
+	return	-1;
 }
 
 static
