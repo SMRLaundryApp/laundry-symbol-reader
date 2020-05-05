@@ -33,7 +33,7 @@ export	SRC_DIR
 
 ################################################################################
 # Make variables (CC, etc...)
-  CC	= gcc
+  CC	= gcc-10
   AS	= as
   SZ	= size
 
@@ -43,7 +43,7 @@ export	SZ
 
 ################################################################################
 # cflags
-CFLAGS_STD	= -std=gnu17
+CFLAGS_STD	= -std=gnu2x
 CFLAGS_W	= -Wall -Wextra -Wno-format -Werror
 CFLAGS_O	= -O3 -march=x86-64 -flto
 CFLAGS_PKG	= `pkg-config --cflags libalx-base`
