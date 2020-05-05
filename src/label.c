@@ -11,6 +11,8 @@
 
 #include <stddef.h>
 
+#include <sys/param.h>
+
 #define ALX_NO_PREFIX
 #include <libalx/base/compiler.h>
 #include <libalx/base/errno.h>
@@ -129,14 +131,14 @@ int	find_symbols_vertically		(img_s *img)
 	alx_cv_extract_imgdata(tmp, NULL, &w, &h, NULL, NULL, NULL);
 	alx_cv_normalize(tmp);					dbg_show(3, tmp);
 	alx_cv_smooth(tmp, ALX_CV_SMOOTH_MEDIAN, 5);		dbg_show(3, tmp);
-	h	= ALX_MIN(w, h);
+	h	= MIN(w, h);
 	alx_cv_adaptive_thr(tmp, ALX_CV_ADAPTIVE_THRESH_GAUSSIAN,
 			ALX_CV_THRESH_BINARY_INV, h / 2, 25);	dbg_show(3, tmp);
 //	alx_cv_canny(tmp, 127, 200, 3, true);			dbg_show(3, tmp);
 	alx_cv_dilate_h(tmp, 1);				dbg_show(3, tmp);
 	alx_cv_dilate(tmp, 1);					dbg_show(3, tmp);
 	alx_cv_holes_fill(tmp);					dbg_show(3, tmp);
-	h	= ALX_MIN(w, h);
+	h	= MIN(w, h);
 	alx_cv_erode_dilate(tmp, h / 35);			dbg_show(3, tmp);
 	alx_cv_dilate_h(tmp, w / 6);				dbg_show(3, tmp);
 	alx_cv_contours(tmp, conts);

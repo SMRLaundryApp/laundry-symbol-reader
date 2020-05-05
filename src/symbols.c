@@ -14,6 +14,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include <sys/param.h>
+
 #define ALX_NO_PREFIX
 #include <libalx/base/compiler.h>
 #include <libalx/base/errno.h>
@@ -202,7 +204,7 @@ int	clean_symbol	(img_s *img)
 	/* Threshold */
 	alx_cv_normalize(img);					dbg_show(3, img);
 	alx_cv_smooth(img, ALX_CV_SMOOTH_MEDIAN, 3);		dbg_show(3, img);
-	w	= ALX_MIN(w, h);
+	w	= MIN(w, h);
 	alx_cv_adaptive_thr(img, ALX_CV_ADAPTIVE_THRESH_GAUSSIAN,
 			ALX_CV_THRESH_BINARY_INV, w / 2, 25);	dbg_show(1, img);
 
